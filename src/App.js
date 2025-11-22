@@ -67,6 +67,7 @@ const ProjectsView = ({ data }) => (
 function App() {
   const [activeTab, setActiveTab] = useState('profile');
   const [isTerminalOpen, setIsTerminalOpen] = useState(false);
+  const [isClosing, setIsClosing] = useState(false);
 
   const renderContent = () => {
     switch(activeTab) {
@@ -74,6 +75,17 @@ function App() {
       case 'experience': return <ExperienceView data={portfolioData.experience} />;
       case 'projects': return <ProjectsView data={portfolioData.projects} />;
       default: return <ProfileView data={portfolioData.profile} />;
+    }
+  };
+
+  const handleCloseTerminal = () => {
+    setIsClosing(true);
+  };
+
+  const handleAnimationEnd = () => {
+    if (isClosing) {
+      setIsTerminalOpen(false);
+      setIsClosing(false);
     }
   };
 
@@ -139,7 +151,9 @@ function App() {
           <TerminalComponent
             onNavigate={setActiveTab}
             activeTab={activeTab}
-            onClose={() => setIsTerminalOpen(false)}
+            onClose={handleCloseTerminal}
+            isClosing={isClosing}
+            onAnimationEnd={handleAnimationEnd}
           />
         )}
       </main>

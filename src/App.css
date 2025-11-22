@@ -245,18 +245,52 @@ li { margin-bottom: 0.5rem; }
 
   /* Overlay Styles */
   position: fixed;
-  bottom: 2rem;
-  left: 2rem;
-  right: 2rem;
-  height: 50vh;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 90%;
+  max-width: 800px;
+  height: 60vh;
   z-index: 1000;
   box-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
-  animation: slideUp 0.3s ease-out;
+
+  /* Zoom Animation */
+  transform-origin: bottom left;
+  animation: zoomIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-@keyframes slideUp {
-  from { transform: translateY(100%); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
+.terminal-wrapper.closing {
+  animation: zoomOut 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes zoomIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.1);
+    top: 90%; /* Start near the button */
+    left: 10%;
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+    top: 50%;
+    left: 50%;
+  }
+}
+
+@keyframes zoomOut {
+  from {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+    top: 50%;
+    left: 50%;
+  }
+  to {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.1);
+    top: 90%; /* End near the button */
+    left: 10%;
+  }
 }
 
 .terminal-header {

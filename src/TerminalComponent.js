@@ -5,7 +5,7 @@ const COMMANDS = ['help', 'ls', 'cd', 'cat', 'clear', 'neofetch'];
 const FILES = ['profile.json', 'experience.md', 'projects.js'];
 const DIRS = ['profile', 'experience', 'projects'];
 
-const TerminalComponent = ({ onNavigate, activeTab, onClose }) => {
+const TerminalComponent = ({ onNavigate, activeTab, onClose, isClosing, onAnimationEnd }) => {
   const [input, setInput] = useState('');
   const [history, setHistory] = useState([
     { type: 'output', content: 'Welcome to the interactive terminal. Type "help" for commands.' }
@@ -27,11 +27,27 @@ const TerminalComponent = ({ onNavigate, activeTab, onClose }) => {
 
   useEffect(() => {
     if (input) {
-      const match = COMMANDS.find(cmd => cmd.startsWith(input)) ||
-                    FILES.find(file => file.startsWith(input)) ||
-                    DIRS.find(dir => dir.startsWith(input));
-      if (match && match !== input) {
-        setSuggestion(match.slice(input.length));
+      const parts = input.split(' ');
+      const cmd = parts[0];
+      const arg = parts.slice(1).join(' ');
+
+      if (parts.length === 1) {
+        // Suggest commands
+        const match = COMMANDS.find(c => c.startsWith(cmd));
+        if (match && match !== cmd) {
+          setSuggestion(match.slice(cmd.length));
+        } else {
+          setSuggestion('');
+        }
+      } else if (['cd', 'cat'].includes(cmd)) {
+        // Suggest files/dirs
+        const options = cmd === 'cd' ? DIRS : FILES;
+        const match = options.find(o => o.startsWith(arg));
+        if (match && match !== arg) {
+          setSuggestion(match.slice(arg.length));
+        } else {
+          setSuggestion('');
+        }
       } else {
         setSuggestion('');
       }
@@ -69,6 +85,10 @@ const TerminalComponent = ({ onNavigate, activeTab, onClose }) => {
           if (DIRS.includes(target)) {
             onNavigate(target);
             response = `Navigating to ${target}...`;
+            // Auto-close after 1.5s
+            setTimeout(() => {
+              onClose();
+            }, 1500);
           } else {
             response = `Directory or file not found: ${args[0]}`;
           }
@@ -151,7 +171,11 @@ const TerminalComponent = ({ onNavigate, activeTab, onClose }) => {
   };
 
   return (
-    <div className="terminal-wrapper" onClick={() => inputRef.current?.focus()}>
+    <div
+      className={`terminal-wrapper ${isClosing ? 'closing' : ''}`}
+      onClick={() => inputRef.current?.focus()}
+      onAnimationEnd={onAnimationEnd}
+    >
       <div className="terminal-header">
         <span>TERMINAL</span>
         <div className="terminal-controls">

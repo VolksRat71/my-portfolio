@@ -80,9 +80,16 @@ export const portfolioData = {
       ]
     },
     {
-      title: "Terminal Portfolio",
-      tech: ["React", "JSON", "CSS"],
-      description: "A responsive, data-driven personal portfolio styled like a retro IDE terminal interface. Features dynamic content rendering and interactive command-line aesthetic."
+      title: "Geo-Targeted QR Code Redirect System",
+      tech: ["CloudFront Functions", "Lambda@Edge", "DynamoDB Global Tables", "SQS", "CloudFront KeyValueStore"],
+      description: "Ultra-fast serverless redirect service with two-tier edge caching delivering sub-5ms redirects globally. Implements intelligent geo-targeting to dynamically route users to location-specific destinations based on ZIP codes, with progressive fallback matching and traffic-dependent caching strategy.",
+      highlights: [
+        "Architected two-tier caching: CloudFront Function (<5ms) → Lambda@Edge + DynamoDB (~50ms)",
+        "Implemented CloudFront KeyValueStore with traffic-dependent caching (90% hit rate after warm-up)",
+        "Designed progressive ZIP code matching algorithm reducing storage from 42K to hundreds of records",
+        "Built DynamoDB Global Tables with 4-region US replication for low-latency edge reads",
+        "Developed fire-and-forget pixel tracking system with SQS queuing and idempotency guarantees"
+      ]
     }
   ]
 };
