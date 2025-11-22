@@ -6,7 +6,7 @@ import { portfolioData } from './contentData';
 const COMMANDS = ['help', 'ls', 'cd', 'cat', 'clear', 'neofetch', 'reboot', 'contact', 'open'];
 const FILES = ['profile.json', 'experience.md', 'projects.js', 'contact.txt'];
 const DIRS = ['profile', 'experience', 'projects', 'contact'];
-const OPEN_TARGETS = ['linkedin', 'github'];
+const OPEN_TARGETS = ['linkedin', 'github', 'email'];
 
 const TerminalComponent = ({ onNavigate, activeTab, onClose, isClosing, onAnimationEnd, onReboot }) => {
   const [input, setInput] = useState('');
@@ -82,7 +82,7 @@ const TerminalComponent = ({ onNavigate, activeTab, onClose, isClosing, onAnimat
   cd <section>       - Navigate to a section
   cat <file>         - View file content (same as cd)
   contact            - View contact information
-  open <target>      - Open social links (linkedin, github)
+  open <target>      - Open links (linkedin, github, email)
   neofetch           - Display system information
   reboot             - Reboot the system
   clear              - Clear terminal history`;
@@ -98,23 +98,24 @@ const TerminalComponent = ({ onNavigate, activeTab, onClose, isClosing, onAnimat
         break;
       case 'contact':
         response = `
-╔════════════════════════════════════════╗
-║         CONTACT INFORMATION            ║
-╠════════════════════════════════════════╣
-║                                        ║
-║  Name:     ${portfolioData.profile.name}                ║
-║  Role:     ${portfolioData.profile.role}   ║
-║  Location: ${portfolioData.profile.location}              ║
-║                                        ║
-║  Social:                               ║
-║    LinkedIn: open linkedin             ║
-║    GitHub:   open github               ║
-║                                        ║
-╚════════════════════════════════════════╝`;
+┌────────────────────────────────────────┐
+│           CONTACT INFORMATION          │
+├────────────────────────────────────────┤
+│                                        │
+│  Name:     ${portfolioData.profile.name.padEnd(27)} │
+│  Role:     ${portfolioData.profile.role.padEnd(27)} │
+│  Location: ${portfolioData.profile.location.padEnd(27)} │
+│                                        │
+│  Links:                                │
+│    > open linkedin                     │
+│    > open github                       │
+│    > open email                        │
+│                                        │
+└────────────────────────────────────────┘`;
         break;
       case 'open':
         if (args.length === 0) {
-          response = 'Usage: open <target>\nAvailable targets: linkedin, github';
+          response = 'Usage: open <target>\nAvailable targets: linkedin, github, email';
         } else {
           const target = args[0].toLowerCase();
           if (target === 'linkedin') {
@@ -123,8 +124,11 @@ const TerminalComponent = ({ onNavigate, activeTab, onClose, isClosing, onAnimat
           } else if (target === 'github') {
             window.open(portfolioData.profile.social.github, '_blank');
             response = 'Opening GitHub profile in new tab...';
+          } else if (target === 'email') {
+            window.open(`mailto:${portfolioData.profile.social.email}`, '_blank');
+            response = `Opening email client to ${portfolioData.profile.social.email}...`;
           } else {
-            response = `Unknown target: ${target}\nAvailable targets: linkedin, github`;
+            response = `Unknown target: ${target}\nAvailable targets: linkedin, github, email`;
           }
         }
         break;
@@ -138,19 +142,20 @@ const TerminalComponent = ({ onNavigate, activeTab, onClose, isClosing, onAnimat
             if (target === 'contact') {
               // Special handling for contact
               response = `
-╔════════════════════════════════════════╗
-║         CONTACT INFORMATION            ║
-╠════════════════════════════════════════╣
-║                                        ║
-║  Name:     ${portfolioData.profile.name}                ║
-║  Role:     ${portfolioData.profile.role}   ║
-║  Location: ${portfolioData.profile.location}              ║
-║                                        ║
-║  Social:                               ║
-║    LinkedIn: open linkedin             ║
-║    GitHub:   open github               ║
-║                                        ║
-╚════════════════════════════════════════╝`;
+┌────────────────────────────────────────┐
+│           CONTACT INFORMATION          │
+├────────────────────────────────────────┤
+│                                        │
+│  Name:     ${portfolioData.profile.name.padEnd(27)} │
+│  Role:     ${portfolioData.profile.role.padEnd(27)} │
+│  Location: ${portfolioData.profile.location.padEnd(27)} │
+│                                        │
+│  Links:                                │
+│    > open linkedin                     │
+│    > open github                       │
+│    > open email                        │
+│                                        │
+└────────────────────────────────────────┘`;
             } else {
               onNavigate(target);
               response = `Navigating to ${target}...`;

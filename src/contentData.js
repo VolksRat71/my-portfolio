@@ -2,14 +2,15 @@
 
 export const portfolioData = {
   profile: {
-    name: "Nathaniel Ryan",
+    name: "Nate Ryan",
     role: "Sr. Software Engineer",
     tagline: "Builder of Fast Cars and Not Fast Vans",
     location: "Austin, Texas",
     bio: "Full Stack Engineer specialized in AWS and Google Cloud Computing. I build high-impact software, from rendering systems for major streaming platforms to intricate business handlers.",
     social: {
-      linkedin: "https://linkedin.com/in/nathaniel-ryan",
-      github: "https://github.com/nathanielryan"
+      linkedin: "https://www.linkedin.com/in/nathanieljryan",
+      github: "https://github.com/VolksRat71",
+      email: "nryan@kervit.com"
     },
     avatarUrl: "/pfp.jpeg",
     heroUrl: "/hero.jpeg"

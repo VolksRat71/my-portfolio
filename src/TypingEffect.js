@@ -6,13 +6,7 @@ const TypingEffect = ({ text, speed = 100 }) => {
 
   useEffect(() => {
     let index = 0;
-    // The user's provided edit removes the initial setDisplayedText('') here.
-    // To match the provided edit exactly, we will remove it.
-    // If the intention was to reset the text on prop change,
-    // the useState initialization handles the first render,
-    // but subsequent `text` changes would not reset `displayedText`
-    // unless `setDisplayedText('')` was explicitly called here.
-    // However, following the instruction faithfully.
+    setDisplayedText(''); // Reset on text change
 
     const interval = setInterval(() => {
       if (index < text.length) {

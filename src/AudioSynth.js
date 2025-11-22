@@ -3,6 +3,7 @@ class AudioSynth {
     this.ctx = null;
     this.masterGain = null;
     this.initialized = false;
+    this.allowBootSound = true; // Only allow boot sound during initial boot
   }
 
   init() {
@@ -22,6 +23,10 @@ class AudioSynth {
     }
   }
 
+  disableBootSound() {
+    this.allowBootSound = false;
+  }
+
   // Helper to create noise buffer
   createNoiseBuffer() {
     if (!this.ctx) return null;
@@ -35,7 +40,22 @@ class AudioSynth {
   }
 
   playTurnOn() {
+    // Only play boot sound if we're still in the boot phase
+    if (!this.allowBootSound) {
+      console.log('Boot sound blocked - boot phase has ended');
+      return;
+    }
+
     if (!this.initialized) this.init();
+
+    // If the AudioContext is suspended, don't schedule the sounds
+    // They would just play later when the context resumes (e.g., on user interaction)
+    if (this.ctx.state === 'suspended') {
+      console.log('Boot sound blocked - AudioContext is suspended');
+      this.allowBootSound = false; // Disable boot sound permanently since we missed the window
+      return;
+    }
+
     this.resume();
 
     const t = this.ctx.currentTime;

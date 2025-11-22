@@ -1,5 +1,5 @@
 // src/App.js
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import './App.css';
 import { portfolioData } from './contentData';
 import { User, Briefcase, Code, Terminal, Mail, Linkedin, Github } from 'lucide-react';
@@ -84,25 +84,32 @@ function App() {
   const [activeTab, setActiveTab] = useState('profile');
   const [isTerminalOpen, setIsTerminalOpen] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
-  const [bootState, setBootState] = useState('ready'); // 'ready', 'off', 'turning-on', 'booting', 'on'
-  const [audioReady, setAudioReady] = useState(false);
+  const [bootState, setBootState] = useState('turning-on'); // 'off', 'turning-on', 'booting', 'on'
+  const bootPhaseActive = useRef(true); // Track if we're still in the boot phase
 
-  const startBoot = () => {
-    if (!audioReady) {
-      audioSynth.init();
-      setAudioReady(true);
-    }
-    setBootState('turning-on');
-    audioSynth.playTurnOn();
-  };
-
+  // Initialize audio once on mount
   useEffect(() => {
-    // Boot sequence timing
+    audioSynth.init();
+    // Resume the audio context (required by browsers)
+    audioSynth.resume();
+    // Play boot sound immediately (only if boot phase is active)
+    if (bootPhaseActive.current) {
+      audioSynth.playTurnOn();
+    }
+  }, []);
+
+  // Boot sequence timing
+  useEffect(() => {
     if (bootState === 'turning-on') {
       const timer = setTimeout(() => {
         setBootState('booting');
       }, 1500); // Match turnOn animation duration
       return () => clearTimeout(timer);
+    }
+    // Mark boot phase as complete when we reach 'on' state
+    if (bootState === 'on') {
+      bootPhaseActive.current = false;
+      audioSynth.disableBootSound(); // Prevent boot sound from playing after boot
     }
   }, [bootState]);
 
@@ -127,16 +134,12 @@ function App() {
   };
 
   const handleReboot = () => {
-    if (audioReady) {
-      audioSynth.playTurnOff();
-    }
+    audioSynth.playTurnOff();
     setBootState('off');
     setIsTerminalOpen(false);
     setTimeout(() => {
       setBootState('turning-on');
-      if (audioReady) {
-        audioSynth.playTurnOn();
-      }
+      audioSynth.playTurnOn();
     }, 1000); // Wait for turn-off animation
   };
 
@@ -146,17 +149,6 @@ function App() {
 
   return (
     <>
-      {/* Click to Start Overlay */}
-      {bootState === 'ready' && (
-        <div className="start-overlay" onClick={startBoot}>
-          <div className="start-prompt">
-            <div className="start-icon">⚡</div>
-            <h1>CLICK TO POWER ON</h1>
-            <p>Experience requires audio</p>
-          </div>
-        </div>
-      )}
-
       {/* Black background for off state */}
       {bootState === 'off' && <div className="crt-off"></div>}
 
@@ -179,7 +171,7 @@ function App() {
             <nav className="sidebar">
               <div className="profile-section">
                 <Terminal size={40} color="#ffb000" />
-                <div style={{ marginTop: '10px', fontSize: '0.8rem' }}>DEV_PORTFOLIO_V1</div>
+                <div style={{ marginTop: '10px', fontSize: '0.8rem' }}>{portfolioData.profile.name.split(' ')[0].toUpperCase()}_PORTFOLIO_V1</div>
               </div>
 
               <div className="nav-menu">
