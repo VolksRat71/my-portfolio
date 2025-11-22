@@ -136,7 +136,7 @@ function App() {
         {renderContent()}
 
         {/* Terminal Toggle Button */}
-        {!isTerminalOpen && (
+        {(!isTerminalOpen || isClosing) && (
           <button
             className="terminal-toggle-btn"
             onClick={() => setIsTerminalOpen(true)}
