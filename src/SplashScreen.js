@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 
 const SplashScreen = ({ onComplete }) => {
   const [lines, setLines] = useState([]);
+  const [isExiting, setIsExiting] = useState(false);
 
   useEffect(() => {
     const bootSequence = [
@@ -31,16 +32,17 @@ const SplashScreen = ({ onComplete }) => {
       timeouts.push(timeout);
     });
 
-    const finishTimeout = setTimeout(() => {
-      onComplete();
+    const exitTimeout = setTimeout(() => {
+      setIsExiting(true);
+      setTimeout(onComplete, 500); // Wait for fade out
     }, 2500);
-    timeouts.push(finishTimeout);
+    timeouts.push(exitTimeout);
 
     return () => timeouts.forEach(clearTimeout);
   }, [onComplete]);
 
   return (
-    <div className="splash-screen">
+    <div className={`splash-screen ${isExiting ? 'fade-out' : ''}`}>
       {lines.map((line, index) => (
         <div key={index} className="bios-text">{line}</div>
       ))}

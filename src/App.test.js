@@ -1,39 +1,65 @@
 import { render, screen, fireEvent, act } from '@testing-library/react';
 import App from './App';
+import { audioSynth } from './AudioSynth';
+
+// Mock AudioSynth
+jest.mock('./AudioSynth', () => ({
+  audioSynth: {
+    init: jest.fn(),
+    playTurnOn: jest.fn(),
+    playTurnOff: jest.fn(),
+    playClick: jest.fn(),
+    playDegauss: jest.fn(),
+  }
+}));
 
 jest.useFakeTimers();
 
-test('initial state is turning-on', () => {
-  const { container } = render(<App />);
-
-  // Should have crt-turn-on class
-  const crtContainer = container.querySelector('.crt-container.crt-turn-on');
-  expect(crtContainer).toBeInTheDocument();
-
-  // Splash screen should NOT be visible yet (waiting for turn-on anim)
-  expect(screen.queryByText(/BIOS Date/i)).not.toBeInTheDocument();
+beforeEach(() => {
+  jest.clearAllMocks();
 });
 
-test('transitions to booting state after turn-on animation', () => {
+test('plays turn-on sound on boot', () => {
   render(<App />);
-
-  // Fast-forward turn-on animation (1.5s)
-  act(() => {
-    jest.advanceTimersByTime(1500);
-  });
-
-  // Splash screen should now be visible
-  expect(screen.getByText(/BIOS Date/i)).toBeInTheDocument();
+  // Should attempt to play sound (wrapped in try/catch in component, but mock won't throw)
+  expect(audioSynth.playTurnOn).toHaveBeenCalled();
 });
 
-test('transitions to running state after boot sequence', () => {
+test('plays click sound on typing', async () => {
   render(<App />);
 
-  // Fast-forward turn-on (1.5s) + boot sequence (2.5s)
+  // Fast-forward to main app
   act(() => {
-    jest.advanceTimersByTime(4000);
+    jest.advanceTimersByTime(4500);
   });
 
-  // Main app should be visible
-  expect(screen.getByText(/DEV_PORTFOLIO_V1/i)).toBeInTheDocument();
+  // Open terminal
+  const toggleBtn = screen.getByText(/_TERMINAL/i);
+  fireEvent.click(toggleBtn);
+
+  // Type in terminal
+  const input = screen.getByRole('textbox');
+  fireEvent.change(input, { target: { value: 'a' } });
+
+  expect(audioSynth.playClick).toHaveBeenCalled();
+});
+
+test('plays turn-off sound on reboot', async () => {
+  render(<App />);
+
+  // Fast-forward to main app
+  act(() => {
+    jest.advanceTimersByTime(4500);
+  });
+
+  // Open terminal
+  const toggleBtn = screen.getByText(/_TERMINAL/i);
+  fireEvent.click(toggleBtn);
+
+  // Type reboot
+  const input = screen.getByRole('textbox');
+  fireEvent.change(input, { target: { value: 'reboot' } });
+  fireEvent.keyDown(input, { key: 'Enter', code: 'Enter' });
+
+  expect(audioSynth.playTurnOff).toHaveBeenCalled();
 });

@@ -1,9 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './App.css';
+import { audioSynth } from './AudioSynth';
+import { portfolioData } from './contentData';
 
-const COMMANDS = ['help', 'ls', 'cd', 'cat', 'clear', 'neofetch'];
-const FILES = ['profile.json', 'experience.md', 'projects.js'];
-const DIRS = ['profile', 'experience', 'projects'];
+const COMMANDS = ['help', 'ls', 'cd', 'cat', 'clear', 'neofetch', 'reboot', 'contact', 'open'];
+const FILES = ['profile.json', 'experience.md', 'projects.js', 'contact.txt'];
+const DIRS = ['profile', 'experience', 'projects', 'contact'];
+const OPEN_TARGETS = ['linkedin', 'github'];
 
 const TerminalComponent = ({ onNavigate, activeTab, onClose, isClosing, onAnimationEnd, onReboot }) => {
   const [input, setInput] = useState('');
@@ -48,6 +51,14 @@ const TerminalComponent = ({ onNavigate, activeTab, onClose, isClosing, onAnimat
         } else {
           setSuggestion('');
         }
+      } else if (cmd === 'open') {
+        // Suggest open targets
+        const match = OPEN_TARGETS.find(o => o.startsWith(arg));
+        if (match && match !== arg) {
+          setSuggestion(match.slice(arg.length));
+        } else {
+          setSuggestion('');
+        }
       } else {
         setSuggestion('');
       }
@@ -66,13 +77,15 @@ const TerminalComponent = ({ onNavigate, activeTab, onClose, isClosing, onAnimat
     switch (command) {
       case 'help':
         response = `Available commands:
-  help          - Show this help message
-  ls            - List available sections
-  cd <section>  - Navigate to a section
-  cat <file>    - View file content (same as cd)
-  neofetch      - Display system information
-  reboot        - Reboot the system
-  clear         - Clear terminal history`;
+  help               - Show this help message
+  ls                 - List available sections
+  cd <section>       - Navigate to a section
+  cat <file>         - View file content (same as cd)
+  contact            - View contact information
+  open <target>      - Open social links (linkedin, github)
+  neofetch           - Display system information
+  reboot             - Reboot the system
+  clear              - Clear terminal history`;
         break;
       case 'ls':
         response = FILES.join('\n');
@@ -83,19 +96,69 @@ const TerminalComponent = ({ onNavigate, activeTab, onClose, isClosing, onAnimat
           onReboot();
         }, 1000);
         break;
+      case 'contact':
+        response = `
+╔════════════════════════════════════════╗
+║         CONTACT INFORMATION            ║
+╠════════════════════════════════════════╣
+║                                        ║
+║  Name:     ${portfolioData.profile.name}                ║
+║  Role:     ${portfolioData.profile.role}   ║
+║  Location: ${portfolioData.profile.location}              ║
+║                                        ║
+║  Social:                               ║
+║    LinkedIn: open linkedin             ║
+║    GitHub:   open github               ║
+║                                        ║
+╚════════════════════════════════════════╝`;
+        break;
+      case 'open':
+        if (args.length === 0) {
+          response = 'Usage: open <target>\nAvailable targets: linkedin, github';
+        } else {
+          const target = args[0].toLowerCase();
+          if (target === 'linkedin') {
+            window.open(portfolioData.profile.social.linkedin, '_blank');
+            response = 'Opening LinkedIn profile in new tab...';
+          } else if (target === 'github') {
+            window.open(portfolioData.profile.social.github, '_blank');
+            response = 'Opening GitHub profile in new tab...';
+          } else {
+            response = `Unknown target: ${target}\nAvailable targets: linkedin, github`;
+          }
+        }
+        break;
       case 'cd':
       case 'cat':
         if (args.length === 0) {
           response = 'Usage: cd <section> or cat <file>';
         } else {
-          const target = args[0].replace('.json', '').replace('.md', '').replace('.js', '');
+          const target = args[0].replace('.json', '').replace('.md', '').replace('.js', '').replace('.txt', '');
           if (DIRS.includes(target)) {
-            onNavigate(target);
-            response = `Navigating to ${target}...`;
-            // Auto-close after 1.5s
-            setTimeout(() => {
-              onClose();
-            }, 1500);
+            if (target === 'contact') {
+              // Special handling for contact
+              response = `
+╔════════════════════════════════════════╗
+║         CONTACT INFORMATION            ║
+╠════════════════════════════════════════╣
+║                                        ║
+║  Name:     ${portfolioData.profile.name}                ║
+║  Role:     ${portfolioData.profile.role}   ║
+║  Location: ${portfolioData.profile.location}              ║
+║                                        ║
+║  Social:                               ║
+║    LinkedIn: open linkedin             ║
+║    GitHub:   open github               ║
+║                                        ║
+╚════════════════════════════════════════╝`;
+            } else {
+              onNavigate(target);
+              response = `Navigating to ${target}...`;
+              // Auto-close after 1.5s
+              setTimeout(() => {
+                onClose();
+              }, 1500);
+            }
           } else {
             response = `Directory or file not found: ${args[0]}`;
           }
@@ -140,11 +203,17 @@ const TerminalComponent = ({ onNavigate, activeTab, onClose, isClosing, onAnimat
     setHistoryIndex(-1);
   };
 
+  const handleInputChange = (e) => {
+    setInput(e.target.value);
+    audioSynth.playClick();
+  };
+
   const handleKeyDown = (e) => {
     if (e.key === 'Enter') {
       handleCommand(input);
       setInput('');
       setSuggestion('');
+      audioSynth.playClick();
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
       if (commandHistory.length > 0) {
@@ -169,11 +238,13 @@ const TerminalComponent = ({ onNavigate, activeTab, onClose, isClosing, onAnimat
       if (suggestion) {
         setInput(input + suggestion);
         setSuggestion('');
+        audioSynth.playClick();
       }
     } else if (e.key === 'ArrowRight' && suggestion) {
         // Optional: Allow right arrow to complete like zsh-autosuggestions
         setInput(input + suggestion);
         setSuggestion('');
+        audioSynth.playClick();
     }
   };
 
@@ -203,7 +274,7 @@ const TerminalComponent = ({ onNavigate, activeTab, onClose, isClosing, onAnimat
               ref={inputRef}
               type="text"
               value={input}
-              onChange={(e) => setInput(e.target.value)}
+              onChange={handleInputChange}
               onKeyDown={handleKeyDown}
               className="terminal-input"
               autoFocus

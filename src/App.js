@@ -2,10 +2,11 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
 import { portfolioData } from './contentData';
-import { User, Briefcase, Code, Terminal, Mail } from 'lucide-react';
+import { User, Briefcase, Code, Terminal, Mail, Linkedin, Github } from 'lucide-react';
 import TypingEffect from './TypingEffect';
 import TerminalComponent from './TerminalComponent';
 import SplashScreen from './SplashScreen';
+import { audioSynth } from './AudioSynth';
 
 // Helper Components to render specific JSON data
 const ProfileView = ({ data }) => (
@@ -29,7 +30,16 @@ const ProfileView = ({ data }) => (
       <p>{data.bio}</p>
       <div style={{ marginTop: '1rem' }}>
         <p>Location: {data.location}</p>
-        <p>Connect: <a href={data.social.linkedin} style={{color: '#ffb000'}}>LinkedIn</a></p>
+        <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }}>
+          <a href={data.social.linkedin} target="_blank" rel="noopener noreferrer" className="social-link">
+            <Linkedin size={20} />
+            <span>LinkedIn</span>
+          </a>
+          <a href={data.social.github} target="_blank" rel="noopener noreferrer" className="social-link">
+            <Github size={20} />
+            <span>GitHub</span>
+          </a>
+        </div>
       </div>
     </div>
   </div>
@@ -74,10 +84,20 @@ function App() {
   const [activeTab, setActiveTab] = useState('profile');
   const [isTerminalOpen, setIsTerminalOpen] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
-  const [bootState, setBootState] = useState('turning-on'); // 'off', 'turning-on', 'booting', 'on'
+  const [bootState, setBootState] = useState('ready'); // 'ready', 'off', 'turning-on', 'booting', 'on'
+  const [audioReady, setAudioReady] = useState(false);
+
+  const startBoot = () => {
+    if (!audioReady) {
+      audioSynth.init();
+      setAudioReady(true);
+    }
+    setBootState('turning-on');
+    audioSynth.playTurnOn();
+  };
 
   useEffect(() => {
-    // Initial boot sequence
+    // Boot sequence timing
     if (bootState === 'turning-on') {
       const timer = setTimeout(() => {
         setBootState('booting');
@@ -107,10 +127,16 @@ function App() {
   };
 
   const handleReboot = () => {
+    if (audioReady) {
+      audioSynth.playTurnOff();
+    }
     setBootState('off');
     setIsTerminalOpen(false);
     setTimeout(() => {
       setBootState('turning-on');
+      if (audioReady) {
+        audioSynth.playTurnOn();
+      }
     }, 1000); // Wait for turn-off animation
   };
 
@@ -120,17 +146,32 @@ function App() {
 
   return (
     <>
+      {/* Click to Start Overlay */}
+      {bootState === 'ready' && (
+        <div className="start-overlay" onClick={startBoot}>
+          <div className="start-prompt">
+            <div className="start-icon">⚡</div>
+            <h1>CLICK TO POWER ON</h1>
+            <p>Experience requires audio</p>
+          </div>
+        </div>
+      )}
+
       {/* Black background for off state */}
       {bootState === 'off' && <div className="crt-off"></div>}
 
       {/* Main CRT Container - handles turn on/off animations */}
-      <div className={`crt-container ${bootState === 'off' ? 'crt-turn-off' : (bootState === 'turning-on' ? 'crt-turn-on' : '')}`}>
+      <div
+        className={`crt-container ${bootState === 'off' ? 'crt-turn-off' : (bootState === 'turning-on' ? 'crt-turn-on' : '')}`}
+      >
 
         {/* Content Switching */}
         {bootState === 'booting' ? (
           <SplashScreen onComplete={handleBootComplete} />
+        ) : bootState === 'turning-on' ? (
+          null
         ) : (
-          <div className="app-content" style={{ opacity: bootState === 'turning-on' ? 0 : 1 }}>
+          <div className={`app-content ${bootState === 'on' ? 'fade-in' : ''}`}>
             <div className="scanline"></div>
             <div className="crt-flicker"></div>
 

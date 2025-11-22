@@ -168,6 +168,24 @@ li { margin-bottom: 0.5rem; }
   color: var(--text-secondary);
 }
 
+.social-link {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-primary);
+  text-decoration: none;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border-color);
+  background-color: rgba(0, 0, 0, 0.3);
+  transition: all 0.2s;
+}
+
+.social-link:hover {
+  background-color: rgba(255, 176, 0, 0.1);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
 /* --- Mobile Responsiveness --- */
 @media (max-width: 768px) {
   .app-container {
@@ -375,6 +393,74 @@ li { margin-bottom: 0.5rem; }
 
 .crt-turn-off {
   animation: turnOff 0.5s ease-out forwards;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+.fade-in {
+  animation: fadeIn 1s ease-in forwards;
+}
+
+.fade-out {
+  animation: fadeOut 0.5s ease-out forwards;
+}
+
+.start-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  cursor: pointer;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.start-prompt {
+  text-align: center;
+  color: #ffb000;
+  font-family: 'Courier New', monospace;
+}
+
+.start-icon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+  animation: flicker 0.5s infinite alternate;
+}
+
+.start-prompt h1 {
+  font-size: 2rem;
+  margin: 0 0 0.5rem 0;
+  letter-spacing: 0.2em;
+  text-shadow: 0 0 10px #ffb000;
+}
+
+.start-prompt p {
+  font-size: 0.9rem;
+  opacity: 0.7;
+  margin: 0;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.8; }
+  50% { opacity: 1; }
+}
+
+@keyframes flicker {
+  0% { opacity: 0.8; }
+  100% { opacity: 1; }
 }
 
 .crt-off {
