@@ -8,10 +8,11 @@ export const portfolioData = {
     location: "Austin, Texas",
     bio: "Full Stack Engineer specialized in AWS and Google Cloud Computing. I build high-impact software, from rendering systems for major streaming platforms to intricate business handlers.",
     social: {
-      linkedin: "https://linkedin.com/in/yourprofile",
-      github: "https://github.com/yourprofile"
+      linkedin: "https://linkedin.com/in/nathaniel-ryan",
+      github: "https://github.com/nathanielryan"
     },
-    avatarUrl: "/api/placeholder/150/150" // Replace with your actual PFP
+    avatarUrl: "/pfp.jpeg",
+    heroUrl: "/hero.jpeg"
   },
   experience: [
     {

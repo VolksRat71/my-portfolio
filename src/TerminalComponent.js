@@ -5,7 +5,7 @@ const COMMANDS = ['help', 'ls', 'cd', 'cat', 'clear', 'neofetch'];
 const FILES = ['profile.json', 'experience.md', 'projects.js'];
 const DIRS = ['profile', 'experience', 'projects'];
 
-const TerminalComponent = ({ onNavigate, activeTab, onClose, isClosing, onAnimationEnd }) => {
+const TerminalComponent = ({ onNavigate, activeTab, onClose, isClosing, onAnimationEnd, onReboot }) => {
   const [input, setInput] = useState('');
   const [history, setHistory] = useState([
     { type: 'output', content: 'Welcome to the interactive terminal. Type "help" for commands.' }
@@ -71,10 +71,17 @@ const TerminalComponent = ({ onNavigate, activeTab, onClose, isClosing, onAnimat
   cd <section>  - Navigate to a section
   cat <file>    - View file content (same as cd)
   neofetch      - Display system information
+  reboot        - Reboot the system
   clear         - Clear terminal history`;
         break;
       case 'ls':
         response = FILES.join('\n');
+        break;
+      case 'reboot':
+        response = 'Rebooting system...';
+        setTimeout(() => {
+          onReboot();
+        }, 1000);
         break;
       case 'cd':
       case 'cat':

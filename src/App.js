@@ -1,20 +1,26 @@
 // src/App.js
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './App.css';
 import { portfolioData } from './contentData';
 import { User, Briefcase, Code, Terminal, Mail } from 'lucide-react';
 import TypingEffect from './TypingEffect';
 import TerminalComponent from './TerminalComponent';
+import SplashScreen from './SplashScreen';
 
 // Helper Components to render specific JSON data
 const ProfileView = ({ data }) => (
   <div className="animate-fade-in">
     <h2 className="section-title"> > cat profile.json</h2>
+    {data.heroUrl && (
+      <div className="hero-container">
+        <img src={data.heroUrl} alt="Hero" className="hero-img" />
+      </div>
+    )}
     <div className="content-card">
       <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', marginBottom: '1rem' }}>
         <img src={data.avatarUrl} alt="Profile" className="profile-img" />
         <div>
-          <h1><TypingEffect text={data.name} speed={100} /></h1>
+          <h1>{data.name}</h1>
           <h3>{data.role}</h3>
         </div>
       </div>
@@ -68,6 +74,17 @@ function App() {
   const [activeTab, setActiveTab] = useState('profile');
   const [isTerminalOpen, setIsTerminalOpen] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
+  const [bootState, setBootState] = useState('turning-on'); // 'off', 'turning-on', 'booting', 'on'
+
+  useEffect(() => {
+    // Initial boot sequence
+    if (bootState === 'turning-on') {
+      const timer = setTimeout(() => {
+        setBootState('booting');
+      }, 1500); // Match turnOn animation duration
+      return () => clearTimeout(timer);
+    }
+  }, [bootState]);
 
   const renderContent = () => {
     switch(activeTab) {
@@ -89,76 +106,104 @@ function App() {
     }
   };
 
+  const handleReboot = () => {
+    setBootState('off');
+    setIsTerminalOpen(false);
+    setTimeout(() => {
+      setBootState('turning-on');
+    }, 1000); // Wait for turn-off animation
+  };
+
+  const handleBootComplete = () => {
+    setBootState('on');
+  };
+
   return (
-    <div className="app-container">
-      <div className="scanline"></div>
-      <div className="crt-flicker"></div>
+    <>
+      {/* Black background for off state */}
+      {bootState === 'off' && <div className="crt-off"></div>}
 
-      {/* Sidebar Navigation */}
-      <nav className="sidebar">
-        <div className="profile-section">
-          <Terminal size={40} color="#ffb000" />
-          <div style={{ marginTop: '10px', fontSize: '0.8rem' }}>DEV_PORTFOLIO_V1</div>
-        </div>
+      {/* Main CRT Container - handles turn on/off animations */}
+      <div className={`crt-container ${bootState === 'off' ? 'crt-turn-off' : (bootState === 'turning-on' ? 'crt-turn-on' : '')}`}>
 
-        <div className="nav-menu">
-          <button
-            className={`nav-item ${activeTab === 'profile' ? 'active' : ''}`}
-            onClick={() => setActiveTab('profile')}
-          >
-            <User size={18} />
-            <span>profile.json</span>
-          </button>
+        {/* Content Switching */}
+        {bootState === 'booting' ? (
+          <SplashScreen onComplete={handleBootComplete} />
+        ) : (
+          <div className="app-content" style={{ opacity: bootState === 'turning-on' ? 0 : 1 }}>
+            <div className="scanline"></div>
+            <div className="crt-flicker"></div>
 
-          <button
-            className={`nav-item ${activeTab === 'experience' ? 'active' : ''}`}
-            onClick={() => setActiveTab('experience')}
-          >
-            <Briefcase size={18} />
-            <span>experience.md</span>
-          </button>
+            {/* Sidebar Navigation */}
+            <nav className="sidebar">
+              <div className="profile-section">
+                <Terminal size={40} color="#ffb000" />
+                <div style={{ marginTop: '10px', fontSize: '0.8rem' }}>DEV_PORTFOLIO_V1</div>
+              </div>
 
-          <button
-            className={`nav-item ${activeTab === 'projects' ? 'active' : ''}`}
-            onClick={() => setActiveTab('projects')}
-          >
-            <Code size={18} />
-            <span>projects.js</span>
-          </button>
-        </div>
-      </nav>
+              <div className="nav-menu">
+                <button
+                  className={`nav-item ${activeTab === 'profile' ? 'active' : ''}`}
+                  onClick={() => setActiveTab('profile')}
+                >
+                  <User size={18} />
+                  <span>profile.json</span>
+                </button>
 
-      {/* Main Content Area */}
-      <main className="main-content">
-        <div className="header-bar">
-           root@nathaniel:~/portfolio/{activeTab} -- -bash
-        </div>
-        {renderContent()}
+                <button
+                  className={`nav-item ${activeTab === 'experience' ? 'active' : ''}`}
+                  onClick={() => setActiveTab('experience')}
+                >
+                  <Briefcase size={18} />
+                  <span>experience.md</span>
+                </button>
 
-        {/* Terminal Toggle Button */}
-        {(!isTerminalOpen || isClosing) && (
-          <button
-            className="terminal-toggle-btn"
-            onClick={() => setIsTerminalOpen(true)}
-          >
-            <Terminal size={20} />
-            <span>_TERMINAL</span>
-          </button>
+                <button
+                  className={`nav-item ${activeTab === 'projects' ? 'active' : ''}`}
+                  onClick={() => setActiveTab('projects')}
+                >
+                  <Code size={18} />
+                  <span>projects.js</span>
+                </button>
+              </div>
+            </nav>
+
+            {/* Main Content Area */}
+            <main className="main-content">
+              <div className="header-bar">
+                 root@nathaniel:~/portfolio/{activeTab} -- -bash
+              </div>
+              {renderContent()}
+
+              {/* Terminal Toggle Button */}
+              {(!isTerminalOpen || isClosing) && (
+                <button
+                  className="terminal-toggle-btn"
+                  onClick={() => setIsTerminalOpen(true)}
+                >
+                  <Terminal size={20} />
+                  <span>_TERMINAL</span>
+                </button>
+              )}
+
+              {/* Terminal Overlay */}
+              {isTerminalOpen && (
+                <TerminalComponent
+                  onNavigate={setActiveTab}
+                  activeTab={activeTab}
+                  onClose={handleCloseTerminal}
+                  isClosing={isClosing}
+                  onAnimationEnd={handleAnimationEnd}
+                  onReboot={handleReboot}
+                />
+              )}
+            </main>
+          </div>
         )}
-
-        {/* Terminal Overlay */}
-        {isTerminalOpen && (
-          <TerminalComponent
-            onNavigate={setActiveTab}
-            activeTab={activeTab}
-            onClose={handleCloseTerminal}
-            isClosing={isClosing}
-            onAnimationEnd={handleAnimationEnd}
-          />
-        )}
-      </main>
-    </div>
+      </div>
+    </>
   );
 }
 
 export default App;
+

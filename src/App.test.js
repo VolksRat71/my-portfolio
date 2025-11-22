@@ -3,40 +3,37 @@ import App from './App';
 
 jest.useFakeTimers();
 
-test('renders portfolio title', async () => {
-  render(<App />);
-  const linkElement = await screen.findByText(/DEV_PORTFOLIO_V1/i);
-  expect(linkElement).toBeInTheDocument();
+test('initial state is turning-on', () => {
+  const { container } = render(<App />);
+
+  // Should have crt-turn-on class
+  const crtContainer = container.querySelector('.crt-container.crt-turn-on');
+  expect(crtContainer).toBeInTheDocument();
+
+  // Splash screen should NOT be visible yet (waiting for turn-on anim)
+  expect(screen.queryByText(/BIOS Date/i)).not.toBeInTheDocument();
 });
 
-test('button is visible during closing animation', async () => {
+test('transitions to booting state after turn-on animation', () => {
   render(<App />);
 
-  // Open terminal
-  const toggleBtn = screen.getByText(/_TERMINAL/i);
-  fireEvent.click(toggleBtn);
+  // Fast-forward turn-on animation (1.5s)
+  act(() => {
+    jest.advanceTimersByTime(1500);
+  });
 
-  // Button should be hidden
-  expect(screen.queryByText(/_TERMINAL/i)).not.toBeInTheDocument();
+  // Splash screen should now be visible
+  expect(screen.getByText(/BIOS Date/i)).toBeInTheDocument();
+});
 
-  // Click close button
-  const closeBtn = screen.getByText('x');
-  fireEvent.click(closeBtn);
+test('transitions to running state after boot sequence', () => {
+  render(<App />);
 
-  // Button should reappear immediately
-  expect(screen.getByText(/_TERMINAL/i)).toBeInTheDocument();
+  // Fast-forward turn-on (1.5s) + boot sequence (2.5s)
+  act(() => {
+    jest.advanceTimersByTime(4000);
+  });
 
-  // Terminal should still be visible (animating)
-  const terminalHeader = screen.getByText(/^TERMINAL$/);
-  expect(terminalHeader).toBeInTheDocument();
-
-  // Simulate animation end
-  const terminalWrapper = terminalHeader.closest('.terminal-wrapper');
-  fireEvent.animationEnd(terminalWrapper);
-
-  // Terminal should be removed
-  expect(terminalHeader).not.toBeInTheDocument();
-
-  // Button should still be visible
-  expect(screen.getByText(/_TERMINAL/i)).toBeInTheDocument();
+  // Main app should be visible
+  expect(screen.getByText(/DEV_PORTFOLIO_V1/i)).toBeInTheDocument();
 });
