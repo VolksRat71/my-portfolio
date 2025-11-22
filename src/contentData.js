@@ -10,10 +10,10 @@ export const portfolioData = {
     social: {
       linkedin: "https://www.linkedin.com/in/nathanieljryan",
       github: "https://github.com/VolksRat71",
-      email: "nryan@kervit.com"
+      email: "nathanieljryan1994@gmail.com"
     },
-    avatarUrl: "/pfp.jpeg",
-    heroUrl: "/hero.jpeg"
+    avatarUrl: `${process.env.PUBLIC_URL}/pfp.jpeg`,
+    heroUrl: `${process.env.PUBLIC_URL}/hero.jpeg`
   },
   experience: [
     {

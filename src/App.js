@@ -80,6 +80,36 @@ const ProjectsView = ({ data }) => (
   </div>
 );
 
+const ContactView = ({ data }) => (
+  <div className="animate-fade-in">
+    <h2 className="section-title"> > cat contact.txt</h2>
+    <div className="content-card">
+      <h2>Get In Touch</h2>
+      <hr style={{ borderColor: '#332200', margin: '1rem 0' }}/>
+      <div style={{ marginBottom: '1.5rem' }}>
+        <p><strong>Name:</strong> {data.name}</p>
+        <p><strong>Role:</strong> {data.role}</p>
+        <p><strong>Location:</strong> {data.location}</p>
+      </div>
+      <h3 style={{ marginBottom: '1rem', color: '#ffb000' }}>Connect With Me</h3>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+        <a href={data.social.linkedin} target="_blank" rel="noopener noreferrer" className="social-link">
+          <Linkedin size={20} />
+          <span>LinkedIn - Connect professionally</span>
+        </a>
+        <a href={data.social.github} target="_blank" rel="noopener noreferrer" className="social-link">
+          <Github size={20} />
+          <span>GitHub - Check out my code</span>
+        </a>
+        <a href={`mailto:${data.social.email}`} className="social-link">
+          <Mail size={20} />
+          <span>Email - {data.social.email}</span>
+        </a>
+      </div>
+    </div>
+  </div>
+);
+
 function App() {
   const [activeTab, setActiveTab] = useState('profile');
   const [isTerminalOpen, setIsTerminalOpen] = useState(false);
@@ -118,6 +148,7 @@ function App() {
       case 'profile': return <ProfileView data={portfolioData.profile} />;
       case 'experience': return <ExperienceView data={portfolioData.experience} />;
       case 'projects': return <ProjectsView data={portfolioData.projects} />;
+      case 'contact': return <ContactView data={portfolioData.profile} />;
       default: return <ProfileView data={portfolioData.profile} />;
     }
   };
@@ -146,6 +177,43 @@ function App() {
   const handleBootComplete = () => {
     setBootState('on');
   };
+
+  const toggleTerminal = () => {
+    if (isTerminalOpen || isClosing) {
+      handleCloseTerminal();
+    } else {
+      setIsTerminalOpen(true);
+    }
+  };
+
+  // Keyboard shortcuts to toggle terminal
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      // Ctrl + ` (backtick) - VS Code style
+      if (e.ctrlKey && e.key === '`') {
+        e.preventDefault();
+        toggleTerminal();
+      }
+      // Ctrl + Alt + T - Linux style
+      else if (e.ctrlKey && e.altKey && e.key === 't') {
+        e.preventDefault();
+        toggleTerminal();
+      }
+      // Ctrl + Shift + T - Common terminal shortcut
+      else if (e.ctrlKey && e.shiftKey && e.key === 'T') {
+        e.preventDefault();
+        toggleTerminal();
+      }
+      // Cmd + ` (backtick) - macOS VS Code style
+      else if (e.metaKey && e.key === '`') {
+        e.preventDefault();
+        toggleTerminal();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isTerminalOpen, isClosing]);
 
   return (
     <>
@@ -197,6 +265,14 @@ function App() {
                 >
                   <Code size={18} />
                   <span>projects.js</span>
+                </button>
+
+                <button
+                  className={`nav-item ${activeTab === 'contact' ? 'active' : ''}`}
+                  onClick={() => setActiveTab('contact')}
+                >
+                  <Mail size={18} />
+                  <span>contact.txt</span>
                 </button>
               </div>
             </nav>

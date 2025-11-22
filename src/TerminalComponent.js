@@ -78,9 +78,9 @@ const TerminalComponent = ({ onNavigate, activeTab, onClose, isClosing, onAnimat
       case 'help':
         response = `Available commands:
   help               - Show this help message
-  ls                 - List available sections
-  cd <section>       - Navigate to a section
-  cat <file>         - View file content (same as cd)
+  ls                 - List available files
+  cat <file>         - Display file contents in terminal
+  cd <section>       - Navigate to a page section
   contact            - View contact information
   open <target>      - Open links (linkedin, github, email)
   neofetch           - Display system information
@@ -132,16 +132,34 @@ const TerminalComponent = ({ onNavigate, activeTab, onClose, isClosing, onAnimat
           }
         }
         break;
-      case 'cd':
       case 'cat':
         if (args.length === 0) {
-          response = 'Usage: cd <section> or cat <file>';
+          response = 'Usage: cat <file>';
         } else {
           const target = args[0].replace('.json', '').replace('.md', '').replace('.js', '').replace('.txt', '');
-          if (DIRS.includes(target)) {
-            if (target === 'contact') {
-              // Special handling for contact
-              response = `
+          if (target === 'profile') {
+            response = `{
+  "name": "${portfolioData.profile.name}",
+  "role": "${portfolioData.profile.role}",
+  "tagline": "${portfolioData.profile.tagline}",
+  "location": "${portfolioData.profile.location}",
+  "bio": "${portfolioData.profile.bio}",
+  "social": {
+    "linkedin": "${portfolioData.profile.social.linkedin}",
+    "github": "${portfolioData.profile.social.github}",
+    "email": "${portfolioData.profile.social.email}"
+  }
+}`;
+          } else if (target === 'experience') {
+            response = portfolioData.experience.map((exp, i) =>
+              `## ${exp.company}\n**${exp.role}** (${exp.period})\n${exp.location ? `**Location:** ${exp.location}\n` : ''}${exp.details.map(d => `• ${d}`).join('\n')}`
+            ).join('\n\n');
+          } else if (target === 'projects') {
+            response = portfolioData.projects.map((proj, i) =>
+              `const project${i + 1} = {\n  title: "${proj.title}",\n  tech: [${proj.tech.map(t => `"${t}"`).join(', ')}],\n  description: "${proj.description}"\n};`
+            ).join('\n\n');
+          } else if (target === 'contact') {
+            response = `
 ┌────────────────────────────────────────┐
 │           CONTACT INFORMATION          │
 ├────────────────────────────────────────┤
@@ -156,16 +174,25 @@ const TerminalComponent = ({ onNavigate, activeTab, onClose, isClosing, onAnimat
 │    > open email                        │
 │                                        │
 └────────────────────────────────────────┘`;
-            } else {
-              onNavigate(target);
-              response = `Navigating to ${target}...`;
-              // Auto-close after 1.5s
-              setTimeout(() => {
-                onClose();
-              }, 1500);
-            }
           } else {
-            response = `Directory or file not found: ${args[0]}`;
+            response = `cat: ${args[0]}: No such file`;
+          }
+        }
+        break;
+      case 'cd':
+        if (args.length === 0) {
+          response = 'Usage: cd <section>';
+        } else {
+          const target = args[0].replace('.json', '').replace('.md', '').replace('.js', '').replace('.txt', '');
+          if (DIRS.includes(target)) {
+            onNavigate(target);
+            response = `Navigating to ${target}...`;
+            // Auto-close after 1.5s
+            setTimeout(() => {
+              onClose();
+            }, 1500);
+          } else {
+            response = `cd: ${args[0]}: No such directory`;
           }
         }
         break;
