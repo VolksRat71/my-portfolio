@@ -16,9 +16,13 @@ const TerminalComponent = ({ onNavigate, activeTab, onClose, isClosing, onAnimat
   const [commandHistory, setCommandHistory] = useState([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
   const [suggestion, setSuggestion] = useState('');
+  const [touchStartX, setTouchStartX] = useState(0);
+  const [keyboardOpen, setKeyboardOpen] = useState(false);
 
   const inputRef = useRef(null);
   const terminalEndRef = useRef(null);
+  const terminalRef = useRef(null);
+  const initialViewportHeight = useRef(window.visualViewport?.height || window.innerHeight);
 
   const scrollToBottom = () => {
     terminalEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -27,6 +31,30 @@ const TerminalComponent = ({ onNavigate, activeTab, onClose, isClosing, onAnimat
   useEffect(() => {
     scrollToBottom();
   }, [history]);
+
+  // Detect keyboard opening on mobile
+  useEffect(() => {
+    const handleViewportResize = () => {
+      if (window.visualViewport) {
+        const currentHeight = window.visualViewport.height;
+        const heightDiff = initialViewportHeight.current - currentHeight;
+
+        // If viewport height decreased by more than 150px, keyboard is likely open
+        if (heightDiff > 150) {
+          setKeyboardOpen(true);
+        } else {
+          setKeyboardOpen(false);
+        }
+      }
+    };
+
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', handleViewportResize);
+      return () => {
+        window.visualViewport.removeEventListener('resize', handleViewportResize);
+      };
+    }
+  }, []);
 
   useEffect(() => {
     if (input) {
@@ -280,9 +308,26 @@ const TerminalComponent = ({ onNavigate, activeTab, onClose, isClosing, onAnimat
     }
   };
 
+  const handleTouchStart = (e) => {
+    setTouchStartX(e.touches[0].clientX);
+  };
+
+  const handleTouchEnd = (e) => {
+    const touchEndX = e.changedTouches[0].clientX;
+    const swipeDistance = touchEndX - touchStartX;
+
+    // Swipe right gesture (at least 50px)
+    if (swipeDistance > 50 && suggestion) {
+      setInput(input + suggestion);
+      setSuggestion('');
+      audioSynth.playClick();
+    }
+  };
+
   return (
     <div
-      className={`terminal-wrapper ${isClosing ? 'closing' : ''}`}
+      ref={terminalRef}
+      className={`terminal-wrapper ${isClosing ? 'closing' : ''} ${keyboardOpen ? 'keyboard-open' : ''}`}
       onClick={() => inputRef.current?.focus()}
       onAnimationEnd={onAnimationEnd}
     >
@@ -300,8 +345,12 @@ const TerminalComponent = ({ onNavigate, activeTab, onClose, isClosing, onAnimat
           </div>
         ))}
         <div className="terminal-input-line">
-          <span>root@nathaniel:~/portfolio/{activeTab} $ </span>
-          <div className="input-container">
+          <span className="terminal-prompt-line">root@nathaniel:~/portfolio/{activeTab} $ </span>
+          <div
+            className="input-container"
+            onTouchStart={handleTouchStart}
+            onTouchEnd={handleTouchEnd}
+          >
             <input
               ref={inputRef}
               type="text"

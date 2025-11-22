@@ -192,6 +192,10 @@ li { margin-bottom: 0.5rem; }
     flex-direction: column;
   }
 
+  .app-content {
+    flex-direction: column;
+  }
+
   .sidebar {
     width: 100%;
     height: auto;
@@ -224,6 +228,105 @@ li { margin-bottom: 0.5rem; }
 
   .main-content {
     padding: 1rem;
+  }
+
+  .hero-container {
+    max-height: 120px;
+  }
+
+  .hero-img {
+    height: 120px;
+  }
+
+  .terminal-toggle-btn {
+    bottom: 0.5rem;
+    left: 0.5rem;
+    padding: 0.4rem 0.8rem;
+    font-size: 0.85rem;
+  }
+
+  /* Mobile Terminal Styles */
+  .terminal-wrapper {
+    width: 95% !important;
+    height: 55vh;
+    max-width: 95% !important;
+    top: 50% !important;
+    bottom: auto !important;
+    left: 50% !important;
+    right: auto !important;
+    transform: translate(-50%, -50%) !important;
+    transform-origin: center center !important;
+    border-radius: 4px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  }
+
+  .terminal-wrapper.closing {
+    animation: mobileSlideDown 0.3s ease-out forwards !important;
+  }
+
+  /* Mobile terminal adjusts when keyboard appears */
+  .terminal-wrapper.keyboard-open {
+    top: 30% !important;
+    height: 50vh;
+    transition: top 0.3s ease-out, height 0.3s ease-out;
+  }
+
+  /* Two-line CLI for mobile */
+  .terminal-input-line {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+  }
+
+  .terminal-prompt-line {
+    display: block;
+    width: 100%;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.25rem;
+  }
+
+  .input-container {
+    width: 100%;
+  }
+
+  .terminal-input {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .terminal-suggestion {
+    left: 0;
+  }
+
+  @keyframes mobileSlideUp {
+    from {
+      transform: translate(-50%, -50%) scale(0.8);
+      opacity: 0;
+    }
+    to {
+      transform: translate(-50%, -50%) scale(1);
+      opacity: 1;
+    }
+  }
+
+  @keyframes mobileSlideDown {
+    from {
+      transform: translate(-50%, -50%) scale(1);
+      opacity: 1;
+    }
+    to {
+      transform: translate(-50%, -50%) scale(0.8);
+      opacity: 0;
+    }
+  }
+
+  .terminal-wrapper:not(.closing) {
+    animation: mobileSlideUp 0.3s ease-out forwards;
+  }
+
+  .terminal-body {
+    font-size: 0.85rem;
   }
 }
 
