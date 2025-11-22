@@ -18,6 +18,10 @@ const TerminalComponent = ({ onNavigate, activeTab, onClose, isClosing, onAnimat
   const [suggestion, setSuggestion] = useState('');
   const [touchStartX, setTouchStartX] = useState(0);
   const [keyboardOpen, setKeyboardOpen] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [position, setPosition] = useState({ x: null, y: null }); // null means centered
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const [isRecentering, setIsRecentering] = useState(false);
 
   const inputRef = useRef(null);
   const terminalEndRef = useRef(null);
@@ -215,10 +219,10 @@ const TerminalComponent = ({ onNavigate, activeTab, onClose, isClosing, onAnimat
           if (DIRS.includes(target)) {
             onNavigate(target);
             response = `Navigating to ${target}...`;
-            // Auto-close after 1.5s
+            // Auto-close after 5s
             setTimeout(() => {
               onClose();
-            }, 1500);
+            }, 500);
           } else {
             response = `cd: ${args[0]}: No such directory`;
           }
@@ -324,14 +328,98 @@ const TerminalComponent = ({ onNavigate, activeTab, onClose, isClosing, onAnimat
     }
   };
 
+  // Desktop drag handlers
+  const handleMouseDown = (e) => {
+    // Only allow dragging from the header, and only on desktop (width > 768px)
+    if (e.target.closest('.terminal-header') && window.innerWidth > 768) {
+      setIsDragging(true);
+
+      const rect = terminalRef.current.getBoundingClientRect();
+      setDragOffset({
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top
+      });
+
+      e.preventDefault();
+    }
+  };
+
+  const handleDoubleClick = (e) => {
+    // Double-click anywhere on terminal to recenter (desktop only)
+    if (window.innerWidth > 768 && position.x !== null && position.y !== null) {
+      // Don't trigger if clicking on input or buttons
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON') {
+        return;
+      }
+
+      // Start recentering animation
+      setIsRecentering(true);
+
+      // After animation completes, reset position
+      setTimeout(() => {
+        setPosition({ x: null, y: null }); // Reset to centered
+        setIsRecentering(false);
+      }, 500); // Match the CSS transition duration
+
+      e.preventDefault();
+    }
+  };
+
+  // Add mouse event listeners for dragging
+  useEffect(() => {
+    const onMouseMove = (e) => {
+      if (isDragging && window.innerWidth > 768) {
+        const newX = e.clientX - dragOffset.x;
+        const newY = e.clientY - dragOffset.y;
+        setPosition({ x: newX, y: newY });
+      }
+    };
+
+    const onMouseUp = () => {
+      setIsDragging(false);
+    };
+
+    if (isDragging) {
+      window.addEventListener('mousemove', onMouseMove);
+      window.addEventListener('mouseup', onMouseUp);
+
+      return () => {
+        window.removeEventListener('mousemove', onMouseMove);
+        window.removeEventListener('mouseup', onMouseUp);
+      };
+    }
+  }, [isDragging, dragOffset]);
+
+  // Calculate terminal style based on position
+  const getTerminalStyle = () => {
+    if (position.x !== null && position.y !== null && window.innerWidth > 768) {
+      // Dragged position (desktop only) - use !important via style attribute
+      return {
+        left: `${position.x}px`,
+        top: `${position.y}px`,
+        transform: 'none',
+        animation: 'none'
+      };
+    }
+    return {}; // Use CSS default (centered)
+  };
+
+  const hasBeenDragged = position.x !== null && position.y !== null;
+
   return (
     <div
       ref={terminalRef}
-      className={`terminal-wrapper ${isClosing ? 'closing' : ''} ${keyboardOpen ? 'keyboard-open' : ''}`}
+      className={`terminal-wrapper ${isClosing ? 'closing' : ''} ${keyboardOpen ? 'keyboard-open' : ''} ${isDragging ? 'dragging' : ''} ${hasBeenDragged ? 'dragged' : ''} ${isRecentering ? 'recentering' : ''}`}
       onClick={() => inputRef.current?.focus()}
       onAnimationEnd={onAnimationEnd}
+      onDoubleClick={handleDoubleClick}
+      style={getTerminalStyle()}
     >
-      <div className="terminal-header">
+      <div
+        className="terminal-header"
+        onMouseDown={handleMouseDown}
+        style={{ cursor: window.innerWidth > 768 ? 'move' : 'default' }}
+      >
         <span>TERMINAL</span>
         <div className="terminal-controls">
           <button onClick={onClose} className="terminal-control-btn minimize">_</button>
