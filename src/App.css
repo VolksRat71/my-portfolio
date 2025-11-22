@@ -1,38 +1,370 @@
-.App {
-  text-align: center;
+/* src/App.css */
+@import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;700&display=swap');
+
+:root {
+  --bg-color: #0d0d0d;
+  --sidebar-bg: #000000;
+  --text-primary: #ffb000; /* Amber color from reference */
+  --text-secondary: #9e6a00;
+  --border-color: #332200;
+  --accent: #ffb000;
+  --font-mono: 'Fira Code', monospace;
 }
 
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
+* {
+  box-sizing: border-box;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
+body {
+  margin: 0;
+  background-color: var(--bg-color);
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  overflow-x: hidden;
 }
 
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
+.app-container {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+}
+
+/* --- Sidebar / Navigation --- */
+.sidebar {
+  width: 280px;
+  background-color: var(--sidebar-bg);
+  border-right: 1px solid var(--border-color);
   display: flex;
   flex-direction: column;
+  padding: 1rem;
+  flex-shrink: 0;
+}
+
+.profile-section {
+  text-align: center;
+  margin-bottom: 2rem;
+  border-bottom: 1px dashed var(--border-color);
+  padding-bottom: 1rem;
+}
+
+.profile-img {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  border: 2px solid var(--accent);
+  margin-bottom: 1rem;
+  object-fit: cover;
+  filter: sepia(100%) hue-rotate(320deg) saturate(500%); /* Retro filter effect */
+}
+
+.nav-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.nav-item {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  text-align: left;
+  padding: 0.75rem;
+  cursor: pointer;
+  display: flex;
   align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
+  gap: 0.5rem;
+  transition: all 0.2s;
 }
 
-.App-link {
-  color: #61dafb;
+.nav-item:hover, .nav-item.active {
+  color: var(--text-primary);
+  background-color: rgba(255, 176, 0, 0.1);
+  border-left: 3px solid var(--accent);
 }
 
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
+/* --- Main Content Area --- */
+.main-content {
+  flex: 1;
+  padding: 2rem;
+  overflow-y: auto;
+  background-image: radial-gradient(#1a1a1a 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+.header-bar {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin-bottom: 2rem;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 0.5rem;
+}
+
+.content-card {
+  border: 1px solid var(--border-color);
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+.section-title {
+  font-size: 1.5rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 2px solid var(--accent);
+  display: inline-block;
+}
+
+/* --- Typography Utilities --- */
+h1 { margin: 0; font-size: 1.2rem; }
+h2 { margin: 0 0 0.5rem 0; font-size: 1.1rem; }
+h3 { margin: 0; font-size: 1rem; color: var(--text-secondary); }
+p { line-height: 1.6; color: #ccc; }
+ul { list-style-type: square; color: #ccc; padding-left: 1.5rem; }
+li { margin-bottom: 0.5rem; }
+.tag {
+  display: inline-block;
+  border: 1px solid var(--text-secondary);
+  padding: 0.2rem 0.5rem;
+  font-size: 0.8rem;
+  margin-right: 0.5rem;
+  color: var(--text-secondary);
+}
+
+/* --- Mobile Responsiveness --- */
+@media (max-width: 768px) {
+  .app-container {
+    flex-direction: column;
   }
-  to {
-    transform: rotate(360deg);
+
+  .sidebar {
+    width: 100%;
+    height: auto;
+    padding: 0.5rem;
+    border-right: none;
+    border-bottom: 1px solid var(--border-color);
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
   }
+
+  .profile-section {
+    display: none; /* Hide big profile on mobile nav */
+  }
+
+  .nav-menu {
+    flex-direction: row;
+    width: 100%;
+    justify-content: space-around;
+  }
+
+  .nav-item span {
+    display: none; /* Show only icons on mobile */
+  }
+
+  .nav-item {
+    justify-content: center;
+    padding: 0.5rem;
+  }
+
+  .main-content {
+    padding: 1rem;
+  }
+}
+
+/* --- Animations --- */
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+.cursor {
+  display: inline-block;
+  width: 10px;
+  height: 1.2em;
+  background-color: var(--accent);
+  margin-left: 5px;
+  vertical-align: bottom;
+  animation: blink 1s step-end infinite;
+}
+
+@keyframes scanline {
+  0% {
+    transform: translateY(-100%);
+  }
+  100% {
+    transform: translateY(100%);
+  }
+}
+
+.scanline {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0),
+    rgba(255, 255, 255, 0) 50%,
+    rgba(0, 0, 0, 0.2) 50%,
+    rgba(0, 0, 0, 0.2)
+  );
+  background-size: 100% 4px;
+  pointer-events: none;
+  z-index: 9999;
+}
+
+.crt-flicker {
+  animation: flicker 0.15s infinite;
+  pointer-events: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(18, 16, 16, 0.1);
+  z-index: 9998;
+  opacity: 0.1;
+}
+
+@keyframes flicker {
+  0% { opacity: 0.1; }
+  50% { opacity: 0.15; }
+  100% { opacity: 0.1; }
+}
+
+/* --- Terminal Component --- */
+.terminal-wrapper {
+  border: 1px solid var(--border-color);
+  background-color: rgba(0, 0, 0, 0.95);
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  display: flex;
+  flex-direction: column;
+
+  /* Overlay Styles */
+  position: fixed;
+  bottom: 2rem;
+  left: 2rem;
+  right: 2rem;
+  height: 50vh;
+  z-index: 1000;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.terminal-header {
+  background-color: var(--border-color);
+  color: var(--text-primary);
+  padding: 0.25rem 0.5rem;
+  font-size: 0.8rem;
+  font-weight: bold;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.terminal-controls {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.terminal-control-btn {
+  background: none;
+  border: none;
+  color: var(--text-primary);
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-weight: bold;
+  padding: 0 0.25rem;
+}
+
+.terminal-control-btn:hover {
+  color: #fff;
+}
+
+.terminal-body {
+  padding: 0.5rem;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.terminal-line {
+  margin-bottom: 0.25rem;
+  white-space: pre-wrap;
+}
+
+.terminal-line.command {
+  color: var(--text-primary);
+}
+
+.terminal-line.output {
+  color: #ccc;
+}
+
+.terminal-input-line {
+  display: flex;
+  align-items: center;
+}
+
+.input-container {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+
+.terminal-input {
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  flex: 1;
+  outline: none;
+  margin-left: 0.5rem;
+  z-index: 2;
+  position: relative;
+}
+
+.terminal-suggestion {
+  position: absolute;
+  left: 0.5rem;
+  top: 0;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  pointer-events: none;
+  z-index: 1;
+  white-space: pre;
+}
+
+.terminal-toggle-btn {
+  position: fixed;
+  bottom: 1rem;
+  left: 1rem;
+  background-color: var(--bg-color);
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  padding: 0.5rem 1rem;
+  font-family: var(--font-mono);
+  cursor: pointer;
+  z-index: 1001;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.2s;
+  box-shadow: 0 0 10px rgba(255, 176, 0, 0.2);
+}
+
+.terminal-toggle-btn:hover {
+  background-color: var(--accent);
+  color: var(--bg-color);
+  box-shadow: 0 0 15px rgba(255, 176, 0, 0.5);
 }

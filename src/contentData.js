@@ -17,42 +17,72 @@ export const portfolioData = {
     {
       company: "KERV Interactive",
       role: "Senior Software Engineer",
-      period: "Jul 2022 - Present",
+      period: "Jul 2022 - Present · 3 yrs 5 mos",
+      location: "Austin, Texas Metropolitan Area",
+      employmentType: "Full-time",
       details: [
-        "Lead development of high-impact software engineering projects using advanced project management.",
-        "Enhance communication across technology teams to ensure smooth project execution.",
-        "Excel in solving complex technical problems by breaking them down into manageable components."
+        "Lead the development and delivery of high-impact software engineering projects, utilizing advanced project management and prioritization skills to efficiently handle multiple tasks and deadlines",
+        "Enhance communication and collaboration across various technology teams and departments, ensuring smooth project execution and contributing to a cohesive organizational culture",
+        "Excel in solving complex technical problems, employing a methodical approach to break down challenges into manageable components, resulting in effective and innovative solutions",
+        "Proactively seek and apply feedback for continuous professional development, staying abreast of technological advancements and contributing to team success through knowledge sharing, colleague support, and newcomer integration"
       ]
     },
     {
       company: "Nerd Power",
       role: "Software Engineer",
-      period: "Apr 2021 - Oct 2022",
+      period: "Apr 2021 - Oct 2022 · 1 yr 7 mos",
+      location: "Gilbert, Arizona, United States",
+      employmentType: "Contract",
       details: [
-        "Developed business applications via Next.js/Material-UI and AWS Lambda/MongoDB.",
-        "Managed tasks independently via Kanban board."
+        "Develop business applications/handlers via Next.js/Material-UI Client & AWS Lambda Microservice/MongoDB Mongoose ORM server-side",
+        "Complete tasks and achieve goals independently, assigned via Kanban board",
+        "Develop features and services as described by product owners, executives, directors, sales personnel, through descriptions given on Slack, E-Meeting, Email, etc."
       ]
     },
     {
       company: "Trilogy Education",
-      role: "Teaching Assistant & Learning Assistant",
-      period: "Mar 2020 - Aug 2022",
+      role: "Multiple Roles",
+      period: "Feb 2020 - Aug 2022 · 2 yrs 7 mos",
+      employmentType: "Part-time",
       details: [
-        "Provided technical support for full-stack web development students at UC Berkeley.",
-        "Assisted over 5,000 university students across the US, UK, and Australia."
+        "Learning Assistant (Mar 2020 - Aug 2022): Utilized Beta Slack support application (Trilobot) to provide written technical and conceptual responses to student inquiries. Assisted students over video call to ensure ticket resolution",
+        "Collaborated with team members remotely to provide web development support to 5,000+ university students across the United States, UK, and Australia",
+        "Teaching Assistant at UC Berkeley (Dec 2020 - Jul 2021): Provided support and guidance to students attending University of California Full-Stack Web Development program",
+        "Reinforced lesson material presented by the lead instructor by helping students with questions and reviewing material one-on-one or in small groups",
+        "Led class reviews, discussions, and whiteboarding challenges to ensure students gain employer competitive skills",
+        "Maintained professional relationships with students and instructional staff at UC Berkeley for full-stack web development cohort",
+        "Provided feedback to curriculum development and technical support teams to improve classroom experience for students and staff",
+        "Substitute Teaching Assistant at University of Oregon (Feb 2020 - Mar 2020)"
       ]
     }
   ],
   projects: [
     {
-      title: "Warner Bros. Discovery Ad System",
-      tech: ["Rendering Engine", "AWS", "Scale"],
-      description: "Lead engineering efforts on the rendering system powering video ads for streaming platforms. Capable of creating thousands of custom videos daily. Featured at the Theater at Madison Square Garden during Upfront 2025."
+      title: "Dynamic Video Rendering System for Warner Bros. Discovery",
+      tech: ["AWS Lambda", "Step Functions", "FFmpeg", "Puppeteer", "MediaConvert", "S3", "DynamoDB"],
+      description: "Lead engineering efforts on a serverless rendering pipeline powering contextually-aware video ads for streaming platforms like Max, Discovery+, and Food Network. The system analyzes TV episode content and dynamically generates thousands of personalized video ads daily, matching products from brand catalogs to what viewers just watched. Featured at The Theater at Madison Square Garden during Warner Bros. Discovery's 2025 Upfront event.",
+      highlights: [
+        "Architected serverless pipeline using AWS Step Functions orchestrating 10+ Lambda functions",
+        "Implemented browser-based animation rendering with Puppeteer for 9 different animation types",
+        "Designed scalable system capable of generating millions of custom videos with sub-minute processing time",
+        "Built intelligent asset management system handling dynamic overlays, QR codes, and multi-format transcoding",
+        "Integrated with visual recognition AI to match episode content with product catalog items"
+      ]
+    },
+    {
+      title: "Radius Creative Platform - Internal Video Production System",
+      tech: ["Node.js", "React", "AWS Lambda", "MySQL", "S3"],
+      description: "Full-featured web application enabling KERV's Creative Strategy Team to produce interactive video advertisements. Provides intuitive interface for template selection, asset management, and real-time video generation with all 9 animation types, custom styling, and QR code integration.",
+      highlights: [
+        "Built React-based UI with Material-UI for streamlined creative workflow",
+        "Developed Koa.js backend API with MySQL database integration",
+        "Implemented real-time job status tracking and asset preview system"
+      ]
     },
     {
       title: "Terminal Portfolio",
       tech: ["React", "JSON", "CSS"],
-      description: "A responsive, data-driven personal portfolio styled like a retro IDE."
+      description: "A responsive, data-driven personal portfolio styled like a retro IDE terminal interface. Features dynamic content rendering and interactive command-line aesthetic."
     }
   ]
 };
