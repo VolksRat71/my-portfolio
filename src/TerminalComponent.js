@@ -3,7 +3,15 @@ import './App.css';
 import { audioSynth } from './AudioSynth';
 import { portfolioData } from './contentData';
 
-const COMMANDS = ['help', 'ls', 'cd', 'cat', 'clear', 'neofetch', 'reboot', 'contact', 'open', 'whoami', 'exit', 'echo'];
+// Standard commands shown in regular help
+const STANDARD_COMMANDS = ['help', 'ls', 'cd', 'cat', 'clear', 'neofetch', 'reboot', 'contact', 'open', 'whoami', 'exit', 'echo'];
+
+// Easter egg commands shown in help -a
+const EASTER_EGG_COMMANDS = ['pwd', 'date', 'history', 'alias', 'env', 'printenv', 'man', 'sudo', 'cowsay', 'sl', 'matrix', 'hack', 'hacker', 'git', 'npm', 'node', 'python', 'curl', 'konami', 'secret', 'easteregg', 'hire', 'say', 'weather', 'uptime', 'free'];
+
+// All commands combined
+const ALL_COMMANDS = [...STANDARD_COMMANDS, ...EASTER_EGG_COMMANDS];
+
 const FILES = ['profile.json', 'experience.md', 'projects.js', 'contact.txt'];
 const DIRS = ['profile', 'experience', 'projects', 'contact'];
 const OPEN_TARGETS = ['linkedin', 'github', 'email'];
@@ -90,8 +98,11 @@ const TerminalComponent = ({ onNavigate, activeTab, onClose, isClosing, onAnimat
       const arg = parts.slice(1).join(' ');
 
       if (parts.length === 1) {
-        // Suggest commands
-        const match = COMMANDS.find(c => c.startsWith(cmd));
+        // Suggest commands - prioritize standard commands, then easter eggs
+        const standardMatch = STANDARD_COMMANDS.find(c => c.startsWith(cmd));
+        const easterEggMatch = EASTER_EGG_COMMANDS.find(c => c.startsWith(cmd));
+        const match = standardMatch || easterEggMatch;
+
         if (match && match !== cmd) {
           setSuggestion(match.slice(cmd.length));
         } else {
@@ -122,6 +133,37 @@ const TerminalComponent = ({ onNavigate, activeTab, onClose, isClosing, onAnimat
     }
   }, [input, commandHistory]);
 
+  // Helper function to convert weather codes to conditions
+  const getWeatherCondition = (code) => {
+    const conditions = {
+      0: 'Clear sky',
+      1: 'Mainly clear',
+      2: 'Partly cloudy',
+      3: 'Overcast',
+      45: 'Foggy',
+      48: 'Foggy',
+      51: 'Light drizzle',
+      53: 'Moderate drizzle',
+      55: 'Dense drizzle',
+      61: 'Slight rain',
+      63: 'Moderate rain',
+      65: 'Heavy rain',
+      71: 'Slight snow',
+      73: 'Moderate snow',
+      75: 'Heavy snow',
+      77: 'Snow grains',
+      80: 'Slight rain showers',
+      81: 'Moderate rain showers',
+      82: 'Violent rain showers',
+      85: 'Slight snow showers',
+      86: 'Heavy snow showers',
+      95: 'Thunderstorm',
+      96: 'Thunderstorm with slight hail',
+      99: 'Thunderstorm with heavy hail'
+    };
+    return conditions[code] || 'Unknown';
+  };
+
   const handleCommand = (cmd) => {
     const parts = cmd.trim().split(' ');
     const command = parts[0].toLowerCase();
@@ -131,8 +173,10 @@ const TerminalComponent = ({ onNavigate, activeTab, onClose, isClosing, onAnimat
 
     switch (command) {
       case 'help':
-        response = `Available commands:
+        if (args[0] === '-a' || args[0] === '--all') {
+          response = `Available commands:
   help          - Show this help message
+  help -a       - Show all commands (including easter eggs)
   ls            - List available files
   cat <file>    - Display file contents
   cd <section>  - Navigate to a page section
@@ -143,7 +187,51 @@ const TerminalComponent = ({ onNavigate, activeTab, onClose, isClosing, onAnimat
   neofetch      - Display system information
   reboot        - Reboot the system
   exit          - Close the terminal
-  clear         - Clear terminal history`;
+  clear         - Clear terminal history
+
+Easter Egg Commands:
+  pwd           - Print working directory
+  date          - Display current date and time
+  history       - Show command history
+  alias         - List command aliases
+  env/printenv  - Show environment variables
+  man <cmd>     - Show manual for command
+  sudo <cmd>    - Run command as superuser
+  cowsay <text> - ASCII cow says something
+  sl            - Steam locomotive (typo of ls)
+  matrix        - Matrix effect
+  hack/hacker   - Hacker simulator
+  git <cmd>     - Git commands
+  npm <cmd>     - NPM commands
+  node -v       - Show Node version
+  python --version - Show Python version
+  curl <url>    - Fetch URL
+  konami        - Konami code easter egg
+  secret        - Find the secret
+  easteregg     - Another easter egg
+  hire me       - Recruiting message
+  say <text>    - Text-to-speech style output
+  weather       - Check weather at your location
+  uptime        - System uptime
+  free          - Memory usage`;
+        } else {
+          response = `Available commands:
+  help          - Show this help message
+  help -a       - Show all commands (including easter eggs)
+  ls            - List available files
+  cat <file>    - Display file contents
+  cd <section>  - Navigate to a page section
+  contact       - View contact information
+  open <target> - Open links (linkedin, github, email)
+  whoami        - Display current user information
+  echo <text>   - Print text to the terminal
+  neofetch      - Display system information
+  reboot        - Reboot the system
+  exit          - Close the terminal
+  clear         - Clear terminal history
+
+Hint: Try 'help -a' to see hidden commands!`;
+        }
         break;
       case 'ls':
         response = FILES.join('\n');
@@ -302,6 +390,259 @@ Location: ${portfolioData.profile.location}
           onClose();
         }, 500);
         break;
+
+      // Basic Unix commands
+      case 'pwd':
+        response = '/portfolio/profile';
+        break;
+      case 'date':
+        response = new Date().toString();
+        break;
+      case 'history':
+        response = commandHistory.map((cmd, i) => `  ${i + 1}  ${cmd}`).join('\n');
+        break;
+      case 'alias':
+        response = `alias ls='ls --color=auto'
+alias ll='ls -alF'
+alias grep='grep --color=auto'
+alias ..='cd ..'
+alias ...='cd ../..'`;
+        break;
+      case 'env':
+      case 'printenv':
+        response = `USER=${portfolioData.profile.name.split(' ')[0].toLowerCase()}
+HOME=/home/${portfolioData.profile.name.split(' ')[0].toLowerCase()}
+SHELL=/bin/zsh
+PATH=/usr/local/bin:/usr/bin:/bin
+LANG=en_US.UTF-8
+EDITOR=vim
+COFFEE_LEVEL=critical
+DEBUG_MODE=true
+NODE_ENV=portfolio`;
+        break;
+      case 'man':
+        if (args.length === 0) {
+          response = 'What manual page do you want?\nTry: man help';
+        } else {
+          response = `Manual page for ${args[0]}:\n\nNAME\n    ${args[0]} - a command in the portfolio terminal\n\nSYNOPSIS\n    ${args[0]} [options]\n\nDESCRIPTION\n    This is a simulated man page. For real help, type: help\n\nSEE ALSO\n    help(1), help -a(1)`;
+        }
+        break;
+      case 'sudo':
+        response = args.length === 0
+          ? 'usage: sudo command\n\nNice try! No sudo privileges here.'
+          : `[sudo] password for ${portfolioData.profile.name.split(' ')[0].toLowerCase()}: \nSorry, ${portfolioData.profile.name.split(' ')[0].toLowerCase()} is not in the sudoers file. This incident will be reported.`;
+        break;
+
+      // Developer commands
+      case 'git':
+        if (args.length === 0) {
+          response = `usage: git [--version] [--help] [-C <path>] <command> [<args>]
+
+These are common Git commands:
+   status     Show the working tree status
+   log        Show commit logs
+   diff       Show changes
+
+Hint: This is a demo portfolio, not a real git repo!`;
+        } else if (args[0] === 'status') {
+          response = `On branch main
+Your branch is up to date with 'origin/main'.
+
+nothing to commit, working tree clean`;
+        } else if (args[0] === 'log') {
+          response = `commit a1b2c3d4 (HEAD -> main, origin/main)
+Author: ${portfolioData.profile.name} <${portfolioData.profile.social.email}>
+Date:   ${new Date().toDateString()}
+
+    Initial commit: Portfolio v1.0`;
+        } else {
+          response = `git: '${args[0]}' is not a git command. See 'git --help'.`;
+        }
+        break;
+      case 'npm':
+        if (args.length === 0 || args[0] === '--version' || args[0] === '-v') {
+          response = '10.2.4';
+        } else if (args[0] === 'install') {
+          response = `added 1337 packages in 42s
+
+128 packages are looking for funding
+  run \`npm fund\` for details`;
+        } else if (args[0] === 'start') {
+          response = 'Portfolio is already running!';
+        } else {
+          response = `Unknown command: "${args[0]}"`;
+        }
+        break;
+      case 'node':
+        if (args[0] === '-v' || args[0] === '--version') {
+          response = 'v20.11.0';
+        } else {
+          response = 'Welcome to Node.js v20.11.0.\nType ".help" for more information.';
+        }
+        break;
+      case 'python':
+        if (args[0] === '--version' || args[0] === '-V') {
+          response = 'Python 3.11.7';
+        } else {
+          response = 'Python 3.11.7\nType "help", "copyright" for more information.';
+        }
+        break;
+
+      // Fun Easter Eggs
+      case 'cowsay':
+        const cowText = args.length > 0 ? args.join(' ') : 'Moo!';
+        const bubbleLen = cowText.length + 2;
+        response = ` ${'_'.repeat(bubbleLen)}
+< ${cowText} >
+ ${'-'.repeat(bubbleLen)}
+        \\   ^__^
+         \\  (oo)\\_______
+            (__)\\       )\\/\\
+                ||----w |
+                ||     ||`;
+        break;
+      case 'sl':
+        response = `      ====        ________                ___________
+  _D _|  |_______/        \\__I_I_____===__|_________|
+   |(_)---  |   H\\________/ |   |        =|___ ___|
+   /     |  |   H  |  |     |   |         ||_| |_||
+  |      |  |   H  |__--------------------| [___] |
+  | ________|___H__/__|_____/[][]~\\_______|       |
+  |/ |   |-----------I_____I [][] []  D   |=======|__
+
+You meant 'ls', didn't you?`;
+        break;
+      case 'matrix':
+        response = `ｦ ｱ ｳ ｴ ｵ ｶ ｷ ｸ ｹ ｺ ｻ ｼ ｽ ｾ ｿ
+ﾀ ﾁ ﾂ ﾃ ﾄ ﾅ ﾆ ﾇ ﾈ ﾉ ﾊ ﾋ ﾌ ﾍ ﾎ
+ﾏ ﾐ ﾑ ﾒ ﾓ ﾔ ﾕ ﾖ ﾗ ﾘ ﾙ ﾚ ﾛ ﾜ
+0 1 0 1 1 0 1 0 0 1 1 0 1 0 1
+
+Wake up, Neo... The Matrix has you.`;
+        break;
+      case 'hack':
+      case 'hacker':
+        response = `[INITIALIZING HACK SEQUENCE...]
+[====================] 100%
+
+Accessing mainframe...           [OK]
+Bypassing firewall...             [OK]
+Decrypting passwords...           [OK]
+Installing backdoor...            [OK]
+
+HACK COMPLETE! Just kidding.
+I'm a portfolio, not a security threat.`;
+        break;
+      case 'uptime':
+        response = ` ${new Date().toLocaleTimeString()} up 1337 days, 13:37, 1 user, load average: 0.42, 0.69, 1.00`;
+        break;
+      case 'free':
+        response = `              total        used        free      shared
+Mem:          64000       62000        2000         500
+Swap:          8000        7999           1
+
+(Most of it is Chrome tabs)`;
+        break;
+      case 'curl':
+        if (args.length === 0) {
+          response = 'curl: try \'curl --help\' for more information';
+        } else {
+          response = `Fetching ${args[0]}...\n\nThis is a demo terminal. curl is simulated here.\nTry: curl https://example.com`;
+        }
+        break;
+      case 'say':
+        response = args.length > 0 ? `"${args.join(' ')}"` : 'say: no text provided';
+        break;
+      case 'hire':
+        response = `Recruiting ${portfolioData.profile.name}?
+
+Excellent choice! I'm available for:
+- Full-stack development
+- Cloud architecture (AWS/GCP)
+- System design & optimization
+
+Let's connect:
+> open linkedin
+> open email
+
+Looking forward to working together!`;
+        break;
+      case 'konami':
+        response = `↑ ↑ ↓ ↓ ← → ← → B A
+
+KONAMI CODE ACTIVATED!
+
+You've unlocked: 30 extra lives...
+Wait, this is a portfolio, not Contra.
+
+Achievement Unlocked: Easter Egg Hunter`;
+        break;
+      case 'secret':
+        response = `Shhh... You found a secret!
+
+The secret to great code? Coffee, sleep, and refactoring.
+Not necessarily in that order.
+
+Try: help -a`;
+        break;
+      case 'easteregg':
+        response = `You found an easter egg!
+
+Congratulations on your curiosity!
+Developers who explore are developers who grow.
+
+There are more hidden commands... keep exploring!`;
+        break;
+      case 'weather':
+        // Get user's location and fetch weather
+        response = 'Fetching weather data...';
+        setHistory(prev => [
+          ...prev,
+          { type: 'command', content: cmd },
+          { type: 'output', content: response }
+        ]);
+
+        navigator.geolocation.getCurrentPosition(
+          async (position) => {
+            try {
+              const { latitude, longitude } = position.coords;
+              const weatherResponse = await fetch(
+                `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true&temperature_unit=fahrenheit`
+              );
+              const weatherData = await weatherResponse.json();
+              const weather = weatherData.current_weather;
+
+              const weatherOutput = `Current Weather
+
+Temperature: ${weather.temperature}°F
+Wind Speed: ${weather.windspeed} mph
+Conditions: ${getWeatherCondition(weather.weathercode)}
+
+Latitude: ${latitude.toFixed(2)}
+Longitude: ${longitude.toFixed(2)}`;
+
+              setHistory(prev => [
+                ...prev.slice(0, -1),
+                { type: 'output', content: weatherOutput }
+              ]);
+            } catch (error) {
+              setHistory(prev => [
+                ...prev.slice(0, -1),
+                { type: 'output', content: 'Error fetching weather data.' }
+              ]);
+            }
+          },
+          () => {
+            setHistory(prev => [
+              ...prev.slice(0, -1),
+              { type: 'output', content: 'Location access denied. Cannot fetch weather.' }
+            ]);
+          }
+        );
+        setCommandHistory(prev => [...prev, cmd]);
+        setHistoryIndex(-1);
+        return;
+
       case 'clear':
         setHistory([]);
         return;
