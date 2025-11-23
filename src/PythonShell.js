@@ -1,103 +1,92 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { loadBrython } from './brythonLoader';
 
 const PythonShell = ({ onExit, setIsAnimating, terminalEndRef }) => {
   const [input, setInput] = useState('');
   const [shellHistory, setShellHistory] = useState([]);
-  const [pyodide, setPyodide] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [brythonReady, setBrythonReady] = useState(false);
+  const [error, setError] = useState(null);
   const inputRef = useRef(null);
+  const contextRef = useRef({});
 
   useEffect(() => {
-    // Load Pyodide
-    const loadPyodide = async () => {
-      try {
-        const { loadPyodide: load } = await import('pyodide');
-        const pyodideInstance = await load({
-          indexURL: 'https://cdn.jsdelivr.net/pyodide/v0.24.1/full/'
-        });
-
-        // Capture stdout
-        await pyodideInstance.runPythonAsync(`
-import sys
-from io import StringIO
-
-class OutputCapture:
-    def __init__(self):
-        self.output = []
-
-    def write(self, text):
-        if text and text.strip():
-            self.output.append(text)
-
-    def flush(self):
-        pass
-
-    def get_output(self):
-        result = ''.join(self.output)
-        self.output = []
-        return result
-
-_output_capture = OutputCapture()
-sys.stdout = _output_capture
-sys.stderr = _output_capture
-        `);
-
-        setPyodide(pyodideInstance);
-        setLoading(false);
-      } catch (error) {
-        setShellHistory(prev => [...prev, {
-          input: '',
-          output: `Failed to load Python: ${error.message}\nFalling back to demo mode.`
-        }]);
-        setLoading(false);
-      }
-    };
-
-    loadPyodide();
+    loadBrython()
+      .then(() => {
+        setBrythonReady(true);
+      })
+      .catch((err) => {
+        setError(err.message);
+        setBrythonReady(false);
+      });
   }, []);
 
   useEffect(() => {
-    if (!loading) {
+    if (brythonReady) {
       inputRef.current?.focus();
     }
     terminalEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [shellHistory, loading, terminalEndRef]);
+  }, [shellHistory, brythonReady, terminalEndRef]);
 
-  const evaluatePython = async (code) => {
+  const evaluatePython = (code) => {
     // Handle special commands
     if (code.trim() === 'exit()' || code.trim() === 'quit()') {
       handleExit();
       return null;
     }
 
-    if (!pyodide) {
+    if (!window.__BRYTHON__) {
       return 'Python not loaded. Try refreshing the page.';
     }
 
     try {
-      // Run the code
-      await pyodide.runPythonAsync(code);
+      // Capture stdout
+      const outputCapture = [];
+      const originalPrint = window.__BRYTHON__.builtins.print;
 
-      // Get captured output
-      const output = await pyodide.runPythonAsync('_output_capture.get_output()');
+      window.__BRYTHON__.builtins.print = function(...args) {
+        outputCapture.push(args.map(a => String(a)).join(' '));
+      };
 
-      // If there was output, return it
-      if (output && output.trim()) {
-        return output;
-      }
-
-      // If no output, try to evaluate as expression
       try {
-        const result = await pyodide.runPythonAsync(`repr(${code})`);
-        return result;
-      } catch {
-        // If that fails, just return empty (was a statement)
+        // Use Brython's py_exec to run code directly
+        const result = window.__BRYTHON__.py_exec(code, {}, '__main__');
+
+        // Restore print
+        window.__BRYTHON__.builtins.print = originalPrint;
+
+        // Return captured output or result
+        if (outputCapture.length > 0) {
+          return outputCapture.join('\n');
+        }
+
+        // If no output and we have a result, return it
+        if (result !== undefined && result !== null) {
+          if (typeof result === 'string') {
+            return `'${result}'`;
+          }
+          return String(result);
+        }
+
         return '';
+      } catch (err) {
+        // Restore print
+        window.__BRYTHON__.builtins.print = originalPrint;
+
+        // Format error
+        let errorMsg = String(err.message || err);
+
+        // Clean up Brython error messages
+        if (errorMsg.includes('name \'') && errorMsg.includes('\' is not defined')) {
+          return errorMsg;
+        }
+        if (errorMsg.toLowerCase().includes('syntaxerror')) {
+          return errorMsg;
+        }
+
+        return errorMsg;
       }
     } catch (error) {
-      // Format Python error
-      const errorStr = error.message || String(error);
-      return errorStr;
+      return `Error: ${error.message}`;
     }
   };
 
@@ -106,11 +95,11 @@ sys.stderr = _output_capture
     onExit();
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
-    if (!input.trim() || loading) return;
+    if (!input.trim() || !brythonReady) return;
 
-    const result = await evaluatePython(input);
+    const result = evaluatePython(input);
 
     if (result !== null) {
       setShellHistory(prev => [...prev, { input, output: result }]);
@@ -119,10 +108,18 @@ sys.stderr = _output_capture
     setInput('');
   };
 
-  if (loading) {
+  if (error) {
+    return (
+      <div className="terminal-line" style={{ color: '#ff6b6b' }}>
+        Failed to load Python: {error}
+      </div>
+    );
+  }
+
+  if (!brythonReady) {
     return (
       <div className="terminal-line" style={{ color: '#aaa' }}>
-        Loading Python WebAssembly... (this may take a moment)
+        Loading Python...
       </div>
     );
   }

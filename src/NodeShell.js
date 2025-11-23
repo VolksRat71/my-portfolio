@@ -3,30 +3,21 @@ import React, { useState, useEffect, useRef } from 'react';
 const NodeShell = ({ onExit, setHistory, setIsAnimating, terminalEndRef }) => {
   const [input, setInput] = useState('');
   const [shellHistory, setShellHistory] = useState([]);
-  const [serverAvailable, setServerAvailable] = useState(null);
+  const contextRef = useRef({
+    // Create a persistent context that survives across evaluations
+    vars: {},
+    consoleOutput: []
+  });
   const inputRef = useRef(null);
-  const sessionIdRef = useRef(Math.random().toString(36).substring(7));
 
   useEffect(() => {
-    // Check if server is available
-    fetch('http://localhost:3001/eval', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ code: '1+1', sessionId: sessionIdRef.current })
-    })
-      .then(() => setServerAvailable(true))
-      .catch(() => setServerAvailable(false));
-
+    // Focus input on mount
     inputRef.current?.focus();
-    terminalEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [terminalEndRef]);
-
-  useEffect(() => {
-    // Scroll on history change
+    // Scroll to bottom
     terminalEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [shellHistory, terminalEndRef]);
 
-  const evaluateJS = async (code) => {
+  const evaluateJS = (code) => {
     try {
       // Handle special commands
       if (code.trim() === '.exit') {
@@ -38,51 +29,106 @@ const NodeShell = ({ onExit, setHistory, setIsAnimating, terminalEndRef }) => {
 .help    Print this help message`;
       }
 
-      // If server is available, use it
-      if (serverAvailable) {
-        const response = await fetch('http://localhost:3001/eval', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            code,
-            sessionId: sessionIdRef.current
-          })
-        });
+      // Reset console output
+      contextRef.current.consoleOutput = [];
 
-        const data = await response.json();
-
-        if (data.success) {
-          return data.result !== undefined ? data.result : 'undefined';
-        } else {
-          return `Uncaught ${data.error}`;
+      // Create console object that captures output
+      const consoleObj = {
+        log: (...args) => {
+          const output = args.map(a =>
+            typeof a === 'object' ? JSON.stringify(a, null, 2) : String(a)
+          ).join(' ');
+          contextRef.current.consoleOutput.push(output);
         }
-      } else {
-        // Fallback message
-        return 'Node REPL server not running. Start it with: node node-repl-server.js';
+      };
+
+      // Get all variable names from context
+      const varNames = Object.keys(contextRef.current.vars);
+      const varValues = varNames.map(name => contextRef.current.vars[name]);
+
+      let result;
+      let isExpression = true;
+
+      // Try as expression first
+      try {
+        const func = new Function('console', ...varNames, `return (${code})`);
+        result = func(consoleObj, ...varValues);
+      } catch (exprError) {
+        // If expression fails, try as statement
+        isExpression = false;
+        try {
+          const func = new Function('console', ...varNames, code);
+          result = func(consoleObj, ...varValues);
+        } catch (stmtError) {
+          throw exprError; // Throw the original expression error
+        }
       }
+
+      // Update context with any new variables declared
+      // First, re-execute the code to populate local scope, then extract variables
+      const varMatches = Array.from(code.matchAll(/(?:const|let|var)\s+(\w+)\s*=/g));
+      if (varMatches.length > 0) {
+        // Re-create function with all current vars plus execute the code
+        const allVarNames = [...varNames];
+        const allVarValues = [...varValues];
+
+        for (const match of varMatches) {
+          const varName = match[1];
+          try {
+            // Execute the code and then extract the new variable
+            const extractFunc = new Function(...allVarNames, `
+              ${code}
+              return ${varName};
+            `);
+            const value = extractFunc(...allVarValues);
+            contextRef.current.vars[varName] = value;
+          } catch (e) {
+            // Variable extraction failed, skip
+          }
+        }
+      }
+
+      // Check for simple assignments like: varName = value
+      const assignMatch = code.match(/^(\w+)\s*=\s*(.+)$/);
+      if (assignMatch) {
+        const varName = assignMatch[1];
+        contextRef.current.vars[varName] = result;
+      }
+
+      // If console.log was called, return that output
+      if (contextRef.current.consoleOutput.length > 0) {
+        return contextRef.current.consoleOutput.join('\n');
+      }
+
+      // Format the result
+      if (result === undefined && !isExpression) {
+        return 'undefined';
+      }
+      if (result === undefined) {
+        return 'undefined';
+      }
+      if (typeof result === 'function') {
+        return `[Function: ${result.name || 'anonymous'}]`;
+      }
+      if (typeof result === 'object' && result !== null) {
+        return JSON.stringify(result, null, 2);
+      }
+      return String(result);
     } catch (error) {
-      return `Error: ${error.message}`;
+      return `Uncaught ${error.name}: ${error.message}`;
     }
   };
 
   const handleExit = () => {
-    // Reset session on exit
-    if (serverAvailable) {
-      fetch('http://localhost:3001/reset', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sessionId: sessionIdRef.current })
-      }).catch(() => {});
-    }
     setIsAnimating(false);
     onExit();
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
     if (!input.trim()) return;
 
-    const result = await evaluateJS(input);
+    const result = evaluateJS(input);
 
     if (result !== null) {
       setShellHistory(prev => [...prev, { input, output: result }]);
@@ -91,23 +137,8 @@ const NodeShell = ({ onExit, setHistory, setIsAnimating, terminalEndRef }) => {
     setInput('');
   };
 
-  if (serverAvailable === null) {
-    return (
-      <div className="terminal-line" style={{ color: '#aaa' }}>
-        Checking for Node REPL server...
-      </div>
-    );
-  }
-
   return (
     <>
-      {!serverAvailable && (
-        <div className="terminal-line" style={{ color: '#ff9800' }}>
-          Warning: Node REPL server not detected.
-          {'\n'}Start server with: node node-repl-server.js
-          {'\n'}
-        </div>
-      )}
       {shellHistory.map((item, i) => (
         <React.Fragment key={i}>
           <div className="terminal-line">
@@ -115,7 +146,7 @@ const NodeShell = ({ onExit, setHistory, setIsAnimating, terminalEndRef }) => {
             {item.input}
           </div>
           {item.output && (
-            <div className="terminal-line output" style={{ color: '#aaa', whiteSpace: 'pre-wrap' }}>
+            <div className="terminal-line output" style={{ color: '#aaa' }}>
               {item.output}
             </div>
           )}
