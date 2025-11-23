@@ -75,6 +75,16 @@ const TerminalComponent = ({ onNavigate, activeTab, onClose, isClosing, onAnimat
 
   useEffect(() => {
     if (input) {
+      // First, check command history for matches (zsh-autosuggestions style)
+      // Search from most recent to oldest
+      const historyMatch = [...commandHistory].reverse().find(h => h.startsWith(input) && h !== input);
+
+      if (historyMatch) {
+        setSuggestion(historyMatch.slice(input.length));
+        return;
+      }
+
+      // Fall back to static command/file/dir suggestions
       const parts = input.split(' ');
       const cmd = parts[0];
       const arg = parts.slice(1).join(' ');
@@ -110,7 +120,7 @@ const TerminalComponent = ({ onNavigate, activeTab, onClose, isClosing, onAnimat
     } else {
       setSuggestion('');
     }
-  }, [input]);
+  }, [input, commandHistory]);
 
   const handleCommand = (cmd) => {
     const parts = cmd.trim().split(' ');
@@ -276,7 +286,14 @@ Location: ${portfolioData.profile.location}
         if (args.length === 0) {
           response = '';
         } else {
-          response = args.join(' ');
+          // Join args and remove surrounding quotes if present
+          let text = args.join(' ');
+          // Remove matching quotes (single or double) from start and end
+          if ((text.startsWith('"') && text.endsWith('"')) ||
+              (text.startsWith("'") && text.endsWith("'"))) {
+            text = text.slice(1, -1);
+          }
+          response = text;
         }
         break;
       case 'exit':
