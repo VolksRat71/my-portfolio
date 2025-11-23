@@ -132,18 +132,18 @@ const TerminalComponent = ({ onNavigate, activeTab, onClose, isClosing, onAnimat
     switch (command) {
       case 'help':
         response = `Available commands:
-  help               - Show this help message
-  ls                 - List available files
-  cat <file>         - Display file contents in terminal
-  cd <section>       - Navigate to a page section
-  contact            - View contact information
-  open <target>      - Open links (linkedin, github, email)
-  whoami             - Display current user information
-  echo <text>        - Print text to the terminal
-  neofetch           - Display system information
-  reboot             - Reboot the system
-  exit               - Close the terminal
-  clear              - Clear terminal history`;
+  help          - Show this help message
+  ls            - List available files
+  cat <file>    - Display file contents
+  cd <section>  - Navigate to a page section
+  contact       - View contact information
+  open <target> - Open links (linkedin, github, email)
+  whoami        - Display current user information
+  echo <text>   - Print text to the terminal
+  neofetch      - Display system information
+  reboot        - Reboot the system
+  exit          - Close the terminal
+  clear         - Clear terminal history`;
         break;
       case 'ls':
         response = FILES.join('\n');

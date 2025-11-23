@@ -27,6 +27,10 @@ class AudioSynth {
     this.allowBootSound = false;
   }
 
+  enableBootSound() {
+    this.allowBootSound = true;
+  }
+
   // Helper to create noise buffer
   createNoiseBuffer() {
     if (!this.ctx) return null;
@@ -52,7 +56,9 @@ class AudioSynth {
     // They would just play later when the context resumes (e.g., on user interaction)
     if (this.ctx.state === 'suspended') {
       console.log('Boot sound blocked - AudioContext is suspended');
-      this.allowBootSound = false; // Disable boot sound permanently since we missed the window
+      // Do NOT disable boot sound permanently, just return for now.
+      // If we resume later (e.g. via click), we might want to play it,
+      // or at least allow it on next reboot.
       return;
     }
 

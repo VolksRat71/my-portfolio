@@ -170,6 +170,7 @@ function App() {
     setIsTerminalOpen(false);
     setTimeout(() => {
       setBootState('turning-on');
+      audioSynth.enableBootSound();
       audioSynth.playTurnOn();
     }, 1000); // Wait for turn-off animation
   };
