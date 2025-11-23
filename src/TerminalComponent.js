@@ -35,6 +35,7 @@ const TerminalComponent = ({ onNavigate, activeTab, onClose, isClosing, onAnimat
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [isRecentering, setIsRecentering] = useState(false);
   const [visualViewportHeight, setVisualViewportHeight] = useState(null);
+  const [isAnimating, setIsAnimating] = useState(false);
 
   const inputRef = useRef(null);
   const terminalEndRef = useRef(null);
@@ -343,22 +344,44 @@ Hint: Try 'help -a' to see hidden commands!`;
         }
         break;
       case 'neofetch':
+        const ua = navigator.userAgent;
+        const getBrowser = () => {
+          if (ua.includes('Edg/')) return 'Edge ' + ua.match(/Edg\/(\d+)/)?.[1];
+          if (ua.includes('Chrome/')) return 'Chrome ' + ua.match(/Chrome\/(\d+)/)?.[1];
+          if (ua.includes('Firefox/')) return 'Firefox ' + ua.match(/Firefox\/(\d+)/)?.[1];
+          if (ua.includes('Safari/') && !ua.includes('Chrome')) return 'Safari ' + ua.match(/Version\/(\d+)/)?.[1];
+          return 'Unknown';
+        };
+        const getOS = () => {
+          if (ua.includes('Win')) return 'Windows';
+          if (ua.includes('Mac')) return 'macOS';
+          if (ua.includes('Linux')) return 'Linux';
+          if (ua.includes('Android')) return 'Android';
+          if (ua.includes('iOS')) return 'iOS';
+          return 'Unknown';
+        };
+        const cores = navigator.hardwareConcurrency || 'Unknown';
+        const memory = performance.memory
+          ? `${(performance.memory.usedJSHeapSize / 1048576).toFixed(0)}MiB / ${(performance.memory.jsHeapSizeLimit / 1048576).toFixed(0)}MiB`
+          : 'N/A';
+        const resolution = `${window.screen.width}x${window.screen.height}`;
+
         response = `
        _,met$$$$$gg.          root@${portfolioData.profile.name.split(' ')[0].toLowerCase()}
     ,g$$$$$$$$$$$$$$$P.       --------------
-  ,g$$P"     """Y$$.".        OS: Debian GNU/Linux 12 (bookworm) x86_64
- ,$$P'              \`$$$.     Host: Hackermans Laptop
-',$$P       ,ggs.     \`$$b:   Kernel: 5.10.0-8-amd64
-\`d$$'     ,$P"'   .    $$$    Uptime: 1337 days, 42 mins
- $$P      d$'     ,    $$P    Packages: 1984 (dpkg)
+  ,g$$P"     """Y$$.".        OS: ${getOS()}
+ ,$$P'              \`$$$.     Host: Portfolio Terminal
+',$$P       ,ggs.     \`$$b:   Browser: ${getBrowser()}
+\`d$$'     ,$P"'   .    $$$    Uptime: ${Math.floor(performance.now() / 1000 / 60)} mins
+ $$P      d$'     ,    $$P    Resolution: ${resolution}
  $$:      $$.   -    ,d$$'    Shell: zsh 5.8
- $$;      Y$b._   _,d$P'      Resolution: 1920x1080
- Y$$.    \`.\`"Y$$$$P"'         DE: GNOME
- \`$$b      "-.__              WM: Mutter
-  \`Y$$                        Terminal: React-Term-V1
-   \`Y$$.                      CPU: Intel i9-9900K (16) @ 5.000GHz
-     \`$$b.                    GPU: NVIDIA GeForce RTX 3090
-       \`Y$$b.                 Memory: 32000MiB / 64000MiB
+ $$;      Y$b._   _,d$P'      Terminal: React-Term-V1
+ Y$$.    \`.\`"Y$$$$P"'         CPU Cores: ${cores}
+ \`$$b      "-.__              Memory: ${memory}
+  \`Y$$                        Language: ${navigator.language}
+   \`Y$$.                      Platform: ${navigator.platform}
+     \`$$b.                    Online: ${navigator.onLine ? 'Yes' : 'No'}
+       \`Y$$b.
           \`"Y$b._
              \`"""
 `;
@@ -513,41 +536,164 @@ Date:   ${new Date().toDateString()}
 You meant 'ls', didn't you?`;
         break;
       case 'matrix':
-        response = `ｦ ｱ ｳ ｴ ｵ ｶ ｷ ｸ ｹ ｺ ｻ ｼ ｽ ｾ ｿ
-ﾀ ﾁ ﾂ ﾃ ﾄ ﾅ ﾆ ﾇ ﾈ ﾉ ﾊ ﾋ ﾌ ﾍ ﾎ
-ﾏ ﾐ ﾑ ﾒ ﾓ ﾔ ﾕ ﾖ ﾗ ﾘ ﾙ ﾚ ﾛ ﾜ
-0 1 0 1 1 0 1 0 0 1 1 0 1 0 1
+        // Animated matrix sequence
+        setIsAnimating(true);
+        setHistory(prev => [
+          ...prev,
+          { type: 'command', content: cmd },
+          { type: 'output', content: '' }
+        ]);
 
-Wake up, Neo... The Matrix has you.`;
-        break;
+        const matrixLines = [
+          'ｦ ｱ ｳ ｴ ｵ ｶ ｷ ｸ ｹ ｺ ｻ ｼ ｽ ｾ ｿ',
+          'ﾀ ﾁ ﾂ ﾃ ﾄ ﾅ ﾆ ﾇ ﾈ ﾉ ﾊ ﾋ ﾌ ﾍ ﾎ',
+          'ﾏ ﾐ ﾑ ﾒ ﾓ ﾔ ﾕ ﾖ ﾗ ﾘ ﾙ ﾚ ﾛ ﾜ',
+          '0 1 0 1 1 0 1 0 0 1 1 0 1 0 1',
+          '',
+          'Wake up, Neo... The Matrix has you.'
+        ];
+
+        let matrixIndex = 0;
+        const runMatrixSequence = () => {
+          if (matrixIndex < matrixLines.length) {
+            setTimeout(() => {
+              setHistory(prev => {
+                const lastOutput = prev[prev.length - 1];
+                const newContent = matrixIndex === 0
+                  ? matrixLines[matrixIndex]
+                  : lastOutput.content + '\n' + matrixLines[matrixIndex];
+                return [
+                  ...prev.slice(0, -1),
+                  { ...lastOutput, content: newContent }
+                ];
+              });
+              matrixIndex++;
+              runMatrixSequence();
+            }, 300);
+          } else {
+            setIsAnimating(false);
+          }
+        };
+        runMatrixSequence();
+
+        setCommandHistory(prev => [...prev, cmd]);
+        setHistoryIndex(-1);
+        return;
       case 'hack':
       case 'hacker':
-        response = `[INITIALIZING HACK SEQUENCE...]
-[====================] 100%
+        // Animated hacker sequence
+        setIsAnimating(true);
+        setHistory(prev => [
+          ...prev,
+          { type: 'command', content: cmd },
+          { type: 'output', content: '[INITIALIZING HACK SEQUENCE...]' }
+        ]);
 
-Accessing mainframe...           [OK]
-Bypassing firewall...             [OK]
-Decrypting passwords...           [OK]
-Installing backdoor...            [OK]
+        const hackSteps = [
+          { delay: 500, text: '[====                ] 20%' },
+          { delay: 1000, text: '[========            ] 40%' },
+          { delay: 1500, text: '[============        ] 60%' },
+          { delay: 2000, text: '[================    ] 80%' },
+          { delay: 2500, text: '[====================] 100%\n' },
+          { delay: 3000, text: 'Accessing mainframe...            [OK]' },
+          { delay: 3500, text: 'Bypassing firewall...             [OK]' },
+          { delay: 4000, text: 'Decrypting passwords...           [OK]' },
+          { delay: 4500, text: 'Installing backdoor...            [OK]\n' },
+          { delay: 5000, text: 'HACK COMPLETE' }
+        ];
 
-HACK COMPLETE! Just kidding.
-I'm a portfolio, not a security threat.`;
-        break;
+        let currentStep = 0;
+        const runHackSequence = () => {
+          if (currentStep < hackSteps.length) {
+            const step = hackSteps[currentStep];
+            const prevDelay = currentStep > 0 ? hackSteps[currentStep - 1].delay : 0;
+
+            setTimeout(() => {
+              setHistory(prev => {
+                const lastOutput = prev[prev.length - 1];
+                const newContent = lastOutput.content + '\n' + step.text;
+                return [
+                  ...prev.slice(0, -1),
+                  { ...lastOutput, content: newContent }
+                ];
+              });
+              currentStep++;
+              runHackSequence();
+            }, step.delay - prevDelay);
+          } else {
+            setIsAnimating(false);
+          }
+        };
+        runHackSequence();
+
+        setCommandHistory(prev => [...prev, cmd]);
+        setHistoryIndex(-1);
+        return;
       case 'uptime':
         response = ` ${new Date().toLocaleTimeString()} up 1337 days, 13:37, 1 user, load average: 0.42, 0.69, 1.00`;
         break;
       case 'free':
-        response = `              total        used        free      shared
+        if (performance.memory) {
+          const totalMB = (performance.memory.jsHeapSizeLimit / 1048576).toFixed(0);
+          const usedMB = (performance.memory.usedJSHeapSize / 1048576).toFixed(0);
+          const freeMB = (totalMB - usedMB).toFixed(0);
+          const totalFormatted = totalMB.padStart(8);
+          const usedFormatted = usedMB.padStart(8);
+          const freeFormatted = freeMB.padStart(8);
+
+          response = `              total        used        free
+Mem:     ${totalFormatted}   ${usedFormatted}   ${freeFormatted} MB
+
+JS Heap Memory (Chrome/Edge only)`;
+        } else {
+          response = `              total        used        free      shared
 Mem:          64000       62000        2000         500
 Swap:          8000        7999           1
 
-(Most of it is Chrome tabs)`;
+(Memory API not available in this browser)`;
+        }
         break;
       case 'curl':
         if (args.length === 0) {
           response = 'curl: try \'curl --help\' for more information';
         } else {
-          response = `Fetching ${args[0]}...\n\nThis is a demo terminal. curl is simulated here.\nTry: curl https://example.com`;
+          let url = args[0];
+          // Add https:// if no protocol specified
+          if (!url.startsWith('http://') && !url.startsWith('https://')) {
+            url = 'https://' + url;
+          }
+
+          response = `Fetching ${url}...`;
+          setHistory(prev => [
+            ...prev,
+            { type: 'command', content: cmd },
+            { type: 'output', content: response }
+          ]);
+
+          fetch(url)
+            .then(res => res.text())
+            .then(data => {
+              // Truncate if too long
+              const maxLength = 2000;
+              const displayData = data.length > maxLength
+                ? data.substring(0, maxLength) + '\n\n... [output truncated]'
+                : data;
+
+              setHistory(prev => [
+                ...prev.slice(0, -1),
+                { type: 'output', content: displayData }
+              ]);
+            })
+            .catch(error => {
+              setHistory(prev => [
+                ...prev.slice(0, -1),
+                { type: 'output', content: `curl: (6) Could not resolve host: ${url}\n${error.message}` }
+              ]);
+            });
+
+          setCommandHistory(prev => [...prev, cmd]);
+          setHistoryIndex(-1);
+          return;
         }
         break;
       case 'say':
@@ -568,14 +714,15 @@ Let's connect:
 Looking forward to working together!`;
         break;
       case 'konami':
-        response = `↑ ↑ ↓ ↓ ← → ← → B A
+        response = `R1 R2 L1 R2 left down right down right up
 
-KONAMI CODE ACTIVATED!
+CHEAT ACTIVATED
 
-You've unlocked: 30 extra lives...
-Wait, this is a portfolio, not Contra.
-
-Achievement Unlocked: Easter Egg Hunter`;
+Health: MAX
+Armor: MAX
+Weapons: ALL
+Wanted Level: CLEARED
+Money: +$250,000`;
         break;
       case 'secret':
         response = `Shhh... You found a secret!
@@ -652,11 +799,13 @@ Longitude: ${longitude.toFixed(2)}`;
         response = `Command not found: ${command}. Type "help" for available commands.`;
     }
 
-    setHistory(prev => [
-      ...prev,
-      { type: 'command', content: cmd },
-      { type: 'output', content: response }
-    ]);
+    if (response !== undefined) {
+      setHistory(prev => [
+        ...prev,
+        { type: 'command', content: cmd },
+        { type: 'output', content: response }
+      ]);
+    }
     setCommandHistory(prev => [...prev, cmd]);
     setHistoryIndex(-1);
   };
@@ -847,27 +996,29 @@ Longitude: ${longitude.toFixed(2)}`;
             {line.type === 'command' ? '> ' : ''}{line.content}
           </div>
         ))}
-        <div className="terminal-input-line">
-          <span className="terminal-prompt-line">root@${portfolioData.profile.name.split(' ')[0].toLowerCase()}:~/portfolio/{activeTab} $ </span>
-          <div className="input-container">
-            <input
-              ref={inputRef}
-              type="text"
-              value={input}
-              onChange={handleInputChange}
-              onKeyDown={handleKeyDown}
-              className="terminal-input"
-              autoFocus
-              spellCheck="false"
-              autoComplete="off"
-            />
-            {suggestion && (
-              <span className="terminal-suggestion">
-                {input}<span style={{ opacity: 0.5 }}>{suggestion}</span>
-              </span>
-            )}
+        {!isAnimating && (
+          <div className="terminal-input-line">
+            <span className="terminal-prompt-line">root@${portfolioData.profile.name.split(' ')[0].toLowerCase()}:~/portfolio/{activeTab} $ </span>
+            <div className="input-container">
+              <input
+                ref={inputRef}
+                type="text"
+                value={input}
+                onChange={handleInputChange}
+                onKeyDown={handleKeyDown}
+                className="terminal-input"
+                autoFocus
+                spellCheck="false"
+                autoComplete="off"
+              />
+              {suggestion && (
+                <span className="terminal-suggestion">
+                  {input}<span style={{ opacity: 0.5 }}>{suggestion}</span>
+                </span>
+              )}
+            </div>
           </div>
-        </div>
+        )}
         <div ref={terminalEndRef} />
       </div>
     </div>
