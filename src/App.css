@@ -698,6 +698,32 @@ li { margin-bottom: 0.5rem; }
   flex: 1;
 }
 
+/* Custom scrollbar for terminal */
+.terminal-body::-webkit-scrollbar {
+  width: 12px;
+}
+
+.terminal-body::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.3);
+  border-left: 1px solid var(--border-color);
+}
+
+.terminal-body::-webkit-scrollbar-thumb {
+  background: var(--accent-color);
+  border: 2px solid rgba(0, 0, 0, 0.3);
+  border-radius: 6px;
+}
+
+.terminal-body::-webkit-scrollbar-thumb:hover {
+  background: var(--text-primary);
+}
+
+/* Firefox scrollbar */
+.terminal-body {
+  scrollbar-width: thin;
+  scrollbar-color: var(--accent-color) rgba(0, 0, 0, 0.3);
+}
+
 .terminal-line {
   margin-bottom: 0.25rem;
   white-space: pre-wrap;

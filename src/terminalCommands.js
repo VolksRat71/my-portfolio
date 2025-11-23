@@ -36,13 +36,12 @@ Easter Egg Commands:
   hack/hacker   - Hacker simulator
   git <cmd>     - Git commands
   npm <cmd>     - NPM commands
-  node -v       - Show Node version
-  python --version - Show Python version
+  node          - Start Node.js shell
+  python        - Start Python shell
   curl <url>    - Fetch URL
   konami        - Konami code easter egg
   secret        - Find the secret
   easteregg     - Another easter egg
-  hire me       - Recruiting message
   say <text>    - Text-to-speech style output
   weather       - Check weather at your location
   uptime        - System uptime
@@ -192,7 +191,6 @@ SHELL=/bin/zsh
 PATH=/usr/local/bin:/usr/bin:/bin
 LANG=en_US.UTF-8
 EDITOR=vim
-COFFEE_LEVEL=critical
 DEBUG_MODE=true
 NODE_ENV=portfolio`,
 
@@ -254,14 +252,16 @@ Date:   ${new Date().toDateString()}
       if (args[0] === '-v' || args[0] === '--version') {
         return 'v20.11.0';
       }
-      return 'Welcome to Node.js v20.11.0.\nType ".help" for more information.';
+      // Shell version handled in async commands
+      return null;
     },
 
     python: (args) => {
       if (args[0] === '--version' || args[0] === '-V') {
         return 'Python 3.11.7';
       }
-      return 'Python 3.11.7\nType "help", "copyright" for more information.';
+      // Shell version handled in async commands
+      return null;
     },
 
     cowsay: (args) => {
@@ -287,7 +287,27 @@ Date:   ${new Date().toDateString()}
 
 You meant 'ls', didn't you?`,
 
-    uptime: () => ` ${new Date().toLocaleTimeString()} up 1337 days, 13:37, 1 user, load average: 0.42, 0.69, 1.00`,
+    uptime: () => {
+      const uptimeMs = performance.now();
+      const uptimeSec = Math.floor(uptimeMs / 1000);
+      const days = Math.floor(uptimeSec / 86400);
+      const hours = Math.floor((uptimeSec % 86400) / 3600);
+      const mins = Math.floor((uptimeSec % 3600) / 60);
+      const secs = uptimeSec % 60;
+
+      let uptimeStr = '';
+      if (days > 0) {
+        uptimeStr = `${days} day${days !== 1 ? 's' : ''}, ${hours}:${mins.toString().padStart(2, '0')}`;
+      } else if (hours > 0) {
+        uptimeStr = `${hours}:${mins.toString().padStart(2, '0')}`;
+      } else if (mins > 0) {
+        uptimeStr = `${mins} min${mins !== 1 ? 's' : ''}`;
+      } else {
+        uptimeStr = `${secs} sec${secs !== 1 ? 's' : ''}`;
+      }
+
+      return ` ${new Date().toLocaleTimeString()} up ${uptimeStr}, 1 user, load average: 0.42, 0.69, 1.00`;
+    },
 
     free: () => {
       if (performance.memory) {
@@ -312,20 +332,6 @@ Swap:          8000        7999           1
     },
 
     say: (args) => args.length > 0 ? `"${args.join(' ')}"` : 'say: no text provided',
-
-    hire: () => `Recruiting ${portfolioData.profile.name}?
-
-Excellent choice! I'm available for:
-- Full-stack development
-- Cloud architecture (AWS/GCP)
-- System design & optimization
-
-Let's connect:
-> open linkedin
-> open email
-
-Looking forward to working together!`,
-
     konami: () => `R1 R2 L1 R2 left down right down right up
 
 CHEAT ACTIVATED
@@ -335,13 +341,6 @@ Armor: MAX
 Weapons: ALL
 Wanted Level: CLEARED
 Money: +$250,000`,
-
-    secret: () => `Shhh... You found a secret!
-
-The secret to great code? Coffee, sleep, and refactoring.
-Not necessarily in that order.
-
-Try: help -a`,
 
     easteregg: () => `You found an easter egg!
 

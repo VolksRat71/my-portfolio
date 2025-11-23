@@ -5,6 +5,8 @@ import { portfolioData } from './contentData';
 import { STANDARD_COMMANDS, EASTER_EGG_COMMANDS, FILES, DIRS, OPEN_TARGETS } from './terminalConstants';
 import { createCommandHandlers } from './terminalCommands';
 import { createAsyncCommandHandlers } from './terminalAsyncCommands';
+import NodeShell from './NodeShell';
+import PythonShell from './PythonShell';
 
 const TerminalComponent = ({ onNavigate, activeTab, onClose, isClosing, onAnimationEnd, onReboot }) => {
   const [input, setInput] = useState('');
@@ -29,6 +31,8 @@ const TerminalComponent = ({ onNavigate, activeTab, onClose, isClosing, onAnimat
   const [isResizing, setIsResizing] = useState(false);
   const [size, setSize] = useState({ width: null, height: null });
   const [resizeStart, setResizeStart] = useState({ x: 0, y: 0, width: 0, height: 0 });
+  const [inNodeShell, setInNodeShell] = useState(false);
+  const [inPythonShell, setInPythonShell] = useState(false);
 
   const inputRef = useRef(null);
   const terminalEndRef = useRef(null);
@@ -181,10 +185,43 @@ const TerminalComponent = ({ onNavigate, activeTab, onClose, isClosing, onAnimat
       }
     } else if (command === 'history') {
       response = asyncHandlers.history(commandHistory);
+    } else if (command === 'python' && args.length === 0) {
+      // Start Python shell
+      setHistory(prev => [
+        ...prev,
+        { type: 'command', content: cmd },
+        { type: 'output', content: 'Python 3.11.7\nType "help", "copyright", "credits" or "license" for more information.' }
+      ]);
+      setInPythonShell(true);
+      setIsAnimating(true);
+      setCommandHistory(prev => [...prev, cmd]);
+      setHistoryIndex(-1);
+      return;
+    } else if (command === 'node' && args.length === 0) {
+      // Start Node shell
+      setHistory(prev => [
+        ...prev,
+        { type: 'command', content: cmd },
+        { type: 'output', content: 'Welcome to Node.js v20.11.0.\nType ".help" for more information.' }
+      ]);
+      setInNodeShell(true);
+      setIsAnimating(true);
+      setCommandHistory(prev => [...prev, cmd]);
+      setHistoryIndex(-1);
+      return;
     }
     // Handle synchronous commands
     else if (handlers[command]) {
       response = handlers[command](args);
+      // If handler returned null, check async handlers
+      if (response === null && command === 'python') {
+        asyncHandlers.python(cmd);
+        return;
+      }
+      if (response === null && command === 'node') {
+        // Already handled above
+        return;
+      }
     } else {
       response = `Command not found: ${command}. Type "help" for available commands.`;
     }
@@ -413,7 +450,20 @@ const TerminalComponent = ({ onNavigate, activeTab, onClose, isClosing, onAnimat
             {line.type === 'command' ? '> ' : ''}{line.content}
           </div>
         ))}
-        {!isAnimating && (
+        {inPythonShell ? (
+          <PythonShell
+            onExit={() => setInPythonShell(false)}
+            setIsAnimating={setIsAnimating}
+            terminalEndRef={terminalEndRef}
+          />
+        ) : inNodeShell ? (
+          <NodeShell
+            onExit={() => setInNodeShell(false)}
+            setHistory={setHistory}
+            setIsAnimating={setIsAnimating}
+            terminalEndRef={terminalEndRef}
+          />
+        ) : !isAnimating && (
           <div className="terminal-input-line">
             <span className="terminal-prompt-line">root@{portfolioData.profile.name.split(' ')[0].toLowerCase()}:~/portfolio/{activeTab} $ </span>
             <div className="input-container">

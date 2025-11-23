@@ -8,8 +8,8 @@ export const STANDARD_COMMANDS = [
 export const EASTER_EGG_COMMANDS = [
   'pwd', 'date', 'history', 'alias', 'env', 'printenv',
   'man', 'sudo', 'cowsay', 'sl', 'matrix', 'hack', 'hacker',
-  'git', 'npm', 'node', 'python', 'curl', 'konami', 'secret',
-  'easteregg', 'hire', 'say', 'weather', 'uptime', 'free'
+  'git', 'npm', 'node', 'python', 'curl', 'konami',
+  'easteregg', 'say', 'weather', 'uptime', 'free'
 ];
 
 // All commands combined

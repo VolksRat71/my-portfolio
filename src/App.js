@@ -282,7 +282,7 @@ function App() {
             {/* Main Content Area */}
             <main className="main-content">
               <div className="header-bar">
-                 root@{username}:~/portfolio/{activeTab} -- -bash
+                 root@{username}:~/portfolio/{activeTab} -- -zsh
               </div>
               {renderContent()}
 
