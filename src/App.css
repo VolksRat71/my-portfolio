@@ -483,6 +483,37 @@ li { margin-bottom: 0.5rem; }
   animation: zoomOut 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
 }
 
+/* Resize Handles */
+.resize-handle {
+  position: absolute;
+  background: transparent;
+  z-index: 10;
+}
+
+.resize-e {
+  right: 0;
+  top: 0;
+  width: 8px;
+  height: 100%;
+  cursor: ew-resize;
+}
+
+.resize-s {
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 8px;
+  cursor: ns-resize;
+}
+
+.resize-se {
+  right: 0;
+  bottom: 0;
+  width: 16px;
+  height: 16px;
+  cursor: nwse-resize;
+}
+
 @keyframes zoomIn {
   from {
     opacity: 0;
