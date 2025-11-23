@@ -12,6 +12,11 @@ const PythonShell = ({ onExit, setIsAnimating, terminalEndRef }) => {
   useEffect(() => {
     loadBrython()
       .then(() => {
+        // Get or create a persistent module for our REPL
+        if (!window.__BRYTHON__.imported['__repl__']) {
+          window.__BRYTHON__.imported['__repl__'] = {};
+        }
+        contextRef.current.namespace = window.__BRYTHON__.imported['__repl__'];
         setBrythonReady(true);
       })
       .catch((err) => {
@@ -48,8 +53,15 @@ const PythonShell = ({ onExit, setIsAnimating, terminalEndRef }) => {
       };
 
       try {
-        // Use Brython's py_exec to run code directly
-        const result = window.__BRYTHON__.py_exec(code, {}, '__main__');
+        // Get the module namespace
+        const moduleNs = window.__BRYTHON__.imported['__repl__'];
+
+        // Compile Python to JavaScript
+        const jsCode = window.__BRYTHON__.py2js(code, '__repl__', '__repl__').to_js();
+
+        // Execute the JavaScript code in the context of the module namespace
+        const func = new Function('$locals', jsCode + '\nreturn $locals;');
+        func(moduleNs);
 
         // Restore print
         window.__BRYTHON__.builtins.print = originalPrint;
@@ -59,14 +71,7 @@ const PythonShell = ({ onExit, setIsAnimating, terminalEndRef }) => {
           return outputCapture.join('\n');
         }
 
-        // If no output and we have a result, return it
-        if (result !== undefined && result !== null) {
-          if (typeof result === 'string') {
-            return `'${result}'`;
-          }
-          return String(result);
-        }
-
+        // For statements that don't produce output, return empty string
         return '';
       } catch (err) {
         // Restore print

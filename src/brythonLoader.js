@@ -25,16 +25,16 @@ export const loadBrython = () => {
       return;
     }
 
-    // Load main Brython script
+    // Load main Brython script from public folder
     const script = document.createElement('script');
     script.id = 'brython-main-script';
-    script.src = 'https://cdn.jsdelivr.net/npm/brython@3.12.3/brython.min.js';
+    script.src = `${process.env.PUBLIC_URL}/brython.min.js`;
 
     script.onload = () => {
-      // Load stdlib
+      // Load stdlib from public folder
       const stdlibScript = document.createElement('script');
       stdlibScript.id = 'brython-stdlib-script';
-      stdlibScript.src = 'https://cdn.jsdelivr.net/npm/brython@3.12.3/brython_stdlib.js';
+      stdlibScript.src = `${process.env.PUBLIC_URL}/brython_stdlib.js`;
 
       stdlibScript.onload = () => {
         // Initialize Brython only if not already initialized
