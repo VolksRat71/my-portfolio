@@ -3,15 +3,19 @@ import './App.css';
 import { audioSynth } from './AudioSynth';
 import { portfolioData } from './contentData';
 
-const COMMANDS = ['help', 'ls', 'cd', 'cat', 'clear', 'neofetch', 'reboot', 'contact', 'open'];
+const COMMANDS = ['help', 'ls', 'cd', 'cat', 'clear', 'neofetch', 'reboot', 'contact', 'open', 'whoami', 'exit', 'echo'];
 const FILES = ['profile.json', 'experience.md', 'projects.js', 'contact.txt'];
 const DIRS = ['profile', 'experience', 'projects', 'contact'];
 const OPEN_TARGETS = ['linkedin', 'github', 'email'];
 
 const TerminalComponent = ({ onNavigate, activeTab, onClose, isClosing, onAnimationEnd, onReboot }) => {
   const [input, setInput] = useState('');
+  const isMobile = window.innerWidth <= 768;
+  const welcomeMessage = isMobile
+    ? 'Welcome to the interactive terminal. Type "help" for commands.\n\nTip: Swipe right anywhere to autocomplete suggestions.'
+    : 'Welcome to the interactive terminal. Type "help" for commands.';
   const [history, setHistory] = useState([
-    { type: 'output', content: 'Welcome to the interactive terminal. Type "help" for commands.' }
+    { type: 'output', content: welcomeMessage }
   ]);
   const [commandHistory, setCommandHistory] = useState([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
@@ -124,8 +128,11 @@ const TerminalComponent = ({ onNavigate, activeTab, onClose, isClosing, onAnimat
   cd <section>       - Navigate to a page section
   contact            - View contact information
   open <target>      - Open links (linkedin, github, email)
+  whoami             - Display current user information
+  echo <text>        - Print text to the terminal
   neofetch           - Display system information
   reboot             - Reboot the system
+  exit               - Close the terminal
   clear              - Clear terminal history`;
         break;
       case 'ls':
@@ -258,6 +265,26 @@ const TerminalComponent = ({ onNavigate, activeTab, onClose, isClosing, onAnimat
              \`"""
 `;
         break;
+      case 'whoami':
+        response = `${portfolioData.profile.name}
+${portfolioData.profile.role}
+Location: ${portfolioData.profile.location}
+
+"${portfolioData.profile.tagline}"`;
+        break;
+      case 'echo':
+        if (args.length === 0) {
+          response = '';
+        } else {
+          response = args.join(' ');
+        }
+        break;
+      case 'exit':
+        response = 'Closing terminal...';
+        setTimeout(() => {
+          onClose();
+        }, 500);
+        break;
       case 'clear':
         setHistory([]);
         return;
@@ -322,19 +349,26 @@ const TerminalComponent = ({ onNavigate, activeTab, onClose, isClosing, onAnimat
   };
 
   const handleTouchStart = (e) => {
-    setTouchStartX(e.touches[0].clientX);
+    // Only track horizontal swipes (not on buttons/input to avoid interfering)
+    if (!e.target.closest('button') && !e.target.closest('input')) {
+      setTouchStartX(e.touches[0].clientX);
+    }
   };
 
   const handleTouchEnd = (e) => {
-    const touchEndX = e.changedTouches[0].clientX;
-    const swipeDistance = touchEndX - touchStartX;
+    // Only handle if we have a start position and a suggestion exists
+    if (touchStartX && suggestion) {
+      const touchEndX = e.changedTouches[0].clientX;
+      const swipeDistance = touchEndX - touchStartX;
 
-    // Swipe right gesture (at least 50px)
-    if (swipeDistance > 50 && suggestion) {
-      setInput(input + suggestion);
-      setSuggestion('');
-      audioSynth.playClick();
+      // Swipe right gesture (at least 50px)
+      if (swipeDistance > 50) {
+        setInput(input + suggestion);
+        setSuggestion('');
+        audioSynth.playClick();
+      }
     }
+    setTouchStartX(0);
   };
 
   // Desktop drag handlers
@@ -445,7 +479,11 @@ const TerminalComponent = ({ onNavigate, activeTab, onClose, isClosing, onAnimat
           <button onClick={onClose} className="terminal-control-btn close">x</button>
         </div>
       </div>
-      <div className="terminal-body">
+      <div
+        className="terminal-body"
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+      >
         {history.map((line, i) => (
           <div key={i} className={`terminal-line ${line.type}`}>
             {line.type === 'command' ? '> ' : ''}{line.content}
@@ -453,11 +491,7 @@ const TerminalComponent = ({ onNavigate, activeTab, onClose, isClosing, onAnimat
         ))}
         <div className="terminal-input-line">
           <span className="terminal-prompt-line">root@nathaniel:~/portfolio/{activeTab} $ </span>
-          <div
-            className="input-container"
-            onTouchStart={handleTouchStart}
-            onTouchEnd={handleTouchEnd}
-          >
+          <div className="input-container">
             <input
               ref={inputRef}
               type="text"

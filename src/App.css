@@ -321,6 +321,21 @@ li { margin-bottom: 0.5rem; }
   .terminal-body {
     font-size: 0.85rem;
   }
+
+  /* Larger tap targets for mobile terminal controls */
+  .terminal-control-btn {
+    padding: 0.5rem 0.75rem !important;
+    font-size: 1.1rem !important;
+    min-width: 44px;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .terminal-header {
+    padding: 0.5rem !important;
+  }
 }
 
 /* --- Animations --- */
