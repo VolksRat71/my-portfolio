@@ -1,3 +1,5 @@
+const webpack = require('webpack');
+
 module.exports = function override(config, env) {
   // Add fallbacks for node modules
   config.resolve.fallback = {
@@ -16,17 +18,18 @@ module.exports = function override(config, env) {
     "process": false
   };
 
-  // Add resolve alias to handle node: protocol
-  config.resolve.alias = {
-    ...config.resolve.alias,
-    "node:child_process": false,
-    "node:crypto": false,
-    "node:fs": false,
-    "node:fs/promises": false,
-    "node:path": false,
-    "node:url": false,
-    "node:vm": false
-  };
+  // Use NormalModuleReplacementPlugin to handle node: protocol imports
+  config.plugins = [
+    ...config.plugins,
+    new webpack.NormalModuleReplacementPlugin(
+      /^node:/,
+      (resource) => {
+        const moduleName = resource.request.replace(/^node:/, '');
+        // Replace with empty module
+        resource.request = 'data:text/javascript,export default {}';
+      }
+    )
+  ];
 
   // Ignore warnings about dynamic imports in Pyodide
   config.ignoreWarnings = [
