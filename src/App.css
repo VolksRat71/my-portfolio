@@ -341,7 +341,24 @@ li { margin-bottom: 0.5rem; }
 /* --- Animations --- */
 @keyframes blink {
   0%, 100% { opacity: 1; }
+  0%, 100% { opacity: 1; }
   50% { opacity: 0; }
+}
+
+@keyframes border-rotate {
+  0% { --angle: 0deg; }
+  100% { --angle: 360deg; }
+}
+
+@keyframes sheen {
+  0%, 90% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@property --angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
 }
 
 .cursor {
@@ -779,7 +796,6 @@ li { margin-bottom: 0.5rem; }
   bottom: 1rem;
   left: 1rem;
   background-color: var(--bg-color);
-  border: 1px solid var(--accent);
   color: var(--accent);
   padding: 0.5rem 1rem;
   font-family: var(--font-mono);
@@ -790,11 +806,41 @@ li { margin-bottom: 0.5rem; }
   gap: 0.5rem;
   transition: all 0.2s;
   box-shadow: 0 0 10px rgba(255, 176, 0, 0.2);
+
+  /* Rotating border setup */
+  border: 1px solid transparent;
+  background-image: linear-gradient(var(--bg-color), var(--bg-color)),
+                    conic-gradient(from var(--angle), transparent 20%, var(--accent), transparent 50%);
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+  animation: border-rotate 4s linear infinite;
+
+  /* Sheen effect */
+  position: fixed;
+  overflow: hidden;
+}
+
+.terminal-toggle-btn::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 176, 0, 0.2),
+    transparent
+  );
+  transform: skewX(-20deg);
+  background-size: 200% 100%;
+  animation: sheen 5s infinite;
+  pointer-events: none;
 }
 
 .terminal-toggle-btn:hover {
-  background-color: var(--accent);
-  color: var(--bg-color);
-  box-shadow: 0 0 15px rgba(255, 176, 0, 0.5);
+  box-shadow: 0 0 20px rgba(255, 176, 0, 0.6);
+  text-shadow: 0 0 8px var(--accent);
 }
 

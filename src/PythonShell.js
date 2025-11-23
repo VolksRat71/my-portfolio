@@ -12,12 +12,21 @@ const PythonShell = ({ onExit, setIsAnimating, terminalEndRef }) => {
   useEffect(() => {
     loadBrython()
       .then(() => {
-        // Get or create a persistent module for our REPL
-        if (!window.__BRYTHON__.imported['__repl__']) {
-          window.__BRYTHON__.imported['__repl__'] = {};
-        }
-        contextRef.current.namespace = window.__BRYTHON__.imported['__repl__'];
-        setBrythonReady(true);
+        // Wait for the Python runner to be available
+        const checkRunner = setInterval(() => {
+          if (window.run_python_code) {
+            clearInterval(checkRunner);
+            setBrythonReady(true);
+          }
+        }, 100);
+
+        // Timeout after 10 seconds
+        setTimeout(() => {
+          clearInterval(checkRunner);
+          if (!window.run_python_code) {
+            setError("Timeout waiting for Python engine");
+          }
+        }, 10000);
       })
       .catch((err) => {
         setError(err.message);
@@ -43,53 +52,13 @@ const PythonShell = ({ onExit, setIsAnimating, terminalEndRef }) => {
       return 'Python not loaded. Try refreshing the page.';
     }
 
+    if (!window.run_python_code) {
+      return 'Python engine not ready. Please wait...';
+    }
+
     try {
-      // Capture stdout
-      const outputCapture = [];
-      const originalPrint = window.__BRYTHON__.builtins.print;
-
-      window.__BRYTHON__.builtins.print = function(...args) {
-        outputCapture.push(args.map(a => String(a)).join(' '));
-      };
-
-      try {
-        // Get the module namespace
-        const moduleNs = window.__BRYTHON__.imported['__repl__'];
-
-        // Compile Python to JavaScript
-        const jsCode = window.__BRYTHON__.py2js(code, '__repl__', '__repl__').to_js();
-
-        // Execute the JavaScript code in the context of the module namespace
-        const func = new Function('$locals', jsCode + '\nreturn $locals;');
-        func(moduleNs);
-
-        // Restore print
-        window.__BRYTHON__.builtins.print = originalPrint;
-
-        // Return captured output or result
-        if (outputCapture.length > 0) {
-          return outputCapture.join('\n');
-        }
-
-        // For statements that don't produce output, return empty string
-        return '';
-      } catch (err) {
-        // Restore print
-        window.__BRYTHON__.builtins.print = originalPrint;
-
-        // Format error
-        let errorMsg = String(err.message || err);
-
-        // Clean up Brython error messages
-        if (errorMsg.includes('name \'') && errorMsg.includes('\' is not defined')) {
-          return errorMsg;
-        }
-        if (errorMsg.toLowerCase().includes('syntaxerror')) {
-          return errorMsg;
-        }
-
-        return errorMsg;
-      }
+      const result = window.run_python_code(code);
+      return result;
     } catch (error) {
       return `Error: ${error.message}`;
     }
@@ -100,6 +69,32 @@ const PythonShell = ({ onExit, setIsAnimating, terminalEndRef }) => {
     onExit();
   };
 
+  const [commandHistory, setCommandHistory] = useState([]);
+  const [historyIndex, setHistoryIndex] = useState(-1);
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (commandHistory.length > 0) {
+        const newIndex = historyIndex === -1 ? commandHistory.length - 1 : Math.max(0, historyIndex - 1);
+        setHistoryIndex(newIndex);
+        setInput(commandHistory[newIndex]);
+      }
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      if (historyIndex !== -1) {
+        const newIndex = historyIndex + 1;
+        if (newIndex < commandHistory.length) {
+          setHistoryIndex(newIndex);
+          setInput(commandHistory[newIndex]);
+        } else {
+          setHistoryIndex(-1);
+          setInput('');
+        }
+      }
+    }
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!input.trim() || !brythonReady) return;
@@ -108,6 +103,8 @@ const PythonShell = ({ onExit, setIsAnimating, terminalEndRef }) => {
 
     if (result !== null) {
       setShellHistory(prev => [...prev, { input, output: result }]);
+      setCommandHistory(prev => [...prev, input]);
+      setHistoryIndex(-1);
     }
 
     setInput('');
@@ -151,6 +148,7 @@ const PythonShell = ({ onExit, setIsAnimating, terminalEndRef }) => {
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
+          onKeyDown={handleKeyDown}
           className="terminal-input"
           autoFocus
           spellCheck="false"

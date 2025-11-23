@@ -57,6 +57,8 @@ Easter Egg Commands:
   open <target> - Open links (linkedin, github, email)
   whoami        - Display current user information
   echo <text>   - Print text to the terminal
+  python        - Start Python shell
+  node          - Start Node.js shell
   neofetch      - Display system information
   reboot        - Reboot the system
   exit          - Close the terminal

@@ -124,6 +124,32 @@ const NodeShell = ({ onExit, setHistory, setIsAnimating, terminalEndRef }) => {
     onExit();
   };
 
+  const [commandHistory, setCommandHistory] = useState([]);
+  const [historyIndex, setHistoryIndex] = useState(-1);
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (commandHistory.length > 0) {
+        const newIndex = historyIndex === -1 ? commandHistory.length - 1 : Math.max(0, historyIndex - 1);
+        setHistoryIndex(newIndex);
+        setInput(commandHistory[newIndex]);
+      }
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      if (historyIndex !== -1) {
+        const newIndex = historyIndex + 1;
+        if (newIndex < commandHistory.length) {
+          setHistoryIndex(newIndex);
+          setInput(commandHistory[newIndex]);
+        } else {
+          setHistoryIndex(-1);
+          setInput('');
+        }
+      }
+    }
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!input.trim()) return;
@@ -132,6 +158,8 @@ const NodeShell = ({ onExit, setHistory, setIsAnimating, terminalEndRef }) => {
 
     if (result !== null) {
       setShellHistory(prev => [...prev, { input, output: result }]);
+      setCommandHistory(prev => [...prev, input]);
+      setHistoryIndex(-1);
     }
 
     setInput('');
@@ -159,6 +187,7 @@ const NodeShell = ({ onExit, setHistory, setIsAnimating, terminalEndRef }) => {
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
+          onKeyDown={handleKeyDown}
           className="terminal-input"
           autoFocus
           spellCheck="false"

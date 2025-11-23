@@ -11,10 +11,11 @@
       content="Nathaniel Ryan - Sr. Software Engineer specializing in AWS and Google Cloud Computing. Portfolio featuring dynamic video rendering systems, serverless architectures, and full-stack development."
     />
     <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
-    <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
     <title>Nathaniel Ryan | Sr. Software Engineer</title>
-  </head>
-  <body>
+    <script type="text/javascript" src="%PUBLIC_URL%/brython.min.js"></script>
+    <script type="text/javascript" src="%PUBLIC_URL%/brython_stdlib.min.js"></script>
+  <body onload="brython()">
+    <script type="text/python" src="%PUBLIC_URL%/python_runner.py"></script>
     <noscript>You need to enable JavaScript to run this app.</noscript>
     <div id="root"></div>
     <!--
