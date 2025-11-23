@@ -245,17 +245,12 @@ li { margin-bottom: 0.5rem; }
     font-size: 0.85rem;
   }
 
-  /* Mobile Terminal Styles */
+  /* Mobile Terminal Styles - height and top position controlled by JS using visual viewport */
   .terminal-wrapper {
     width: 95% !important;
-    height: 55vh;
     max-width: 95% !important;
-    top: 50% !important;
-    bottom: auto !important;
-    left: 50% !important;
-    right: auto !important;
-    transform: translate(-50%, -50%) !important;
-    transform-origin: center center !important;
+    left: 2.5% !important;
+    transform: none !important;
     border-radius: 4px;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
   }
@@ -266,9 +261,7 @@ li { margin-bottom: 0.5rem; }
 
   /* Mobile terminal adjusts when keyboard appears */
   .terminal-wrapper.keyboard-open {
-    top: 30% !important;
-    height: 50vh;
-    transition: top 0.3s ease-out, height 0.3s ease-out;
+    transition: top 0.3s ease-out, bottom 0.3s ease-out;
   }
 
   /* Two-line CLI for mobile */

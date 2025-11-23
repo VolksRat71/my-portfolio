@@ -22,6 +22,7 @@ const TerminalComponent = ({ onNavigate, activeTab, onClose, isClosing, onAnimat
   const [position, setPosition] = useState({ x: null, y: null }); // null means centered
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [isRecentering, setIsRecentering] = useState(false);
+  const [visualViewportHeight, setVisualViewportHeight] = useState(null);
 
   const inputRef = useRef(null);
   const terminalEndRef = useRef(null);
@@ -36,12 +37,15 @@ const TerminalComponent = ({ onNavigate, activeTab, onClose, isClosing, onAnimat
     scrollToBottom();
   }, [history]);
 
-  // Detect keyboard opening on mobile
+  // Track visual viewport height for mobile
   useEffect(() => {
     const handleViewportResize = () => {
-      if (window.visualViewport) {
+      if (window.visualViewport && window.innerWidth <= 768) {
         const currentHeight = window.visualViewport.height;
         const heightDiff = initialViewportHeight.current - currentHeight;
+
+        // Store visual viewport height for mobile
+        setVisualViewportHeight(currentHeight);
 
         // If viewport height decreased by more than 150px, keyboard is likely open
         if (heightDiff > 150) {
@@ -51,6 +55,11 @@ const TerminalComponent = ({ onNavigate, activeTab, onClose, isClosing, onAnimat
         }
       }
     };
+
+    // Initialize on mount for mobile
+    if (window.innerWidth <= 768) {
+      handleViewportResize();
+    }
 
     if (window.visualViewport) {
       window.visualViewport.addEventListener('resize', handleViewportResize);
@@ -393,7 +402,7 @@ const TerminalComponent = ({ onNavigate, activeTab, onClose, isClosing, onAnimat
   // Calculate terminal style based on position
   const getTerminalStyle = () => {
     if (position.x !== null && position.y !== null && window.innerWidth > 768) {
-      // Dragged position (desktop only) - use !important via style attribute
+      // Dragged position (desktop only)
       return {
         left: `${position.x}px`,
         top: `${position.y}px`,
@@ -401,7 +410,17 @@ const TerminalComponent = ({ onNavigate, activeTab, onClose, isClosing, onAnimat
         animation: 'none'
       };
     }
-    return {}; // Use CSS default (centered)
+
+    // Mobile: Apply visual viewport height and positioning
+    if (window.innerWidth <= 768 && visualViewportHeight !== null) {
+      const margin = visualViewportHeight * 0.025; // 2.5% margin
+      return {
+        top: `${margin}px`,
+        height: `${visualViewportHeight - (margin * 2)}px` // visual viewport minus top and bottom margins
+      };
+    }
+
+    return {}; // Use CSS default
   };
 
   const hasBeenDragged = position.x !== null && position.y !== null;
