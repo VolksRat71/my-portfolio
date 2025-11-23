@@ -47,7 +47,7 @@ const ProfileView = ({ data }) => (
 
 const ExperienceView = ({ data }) => (
   <div className="animate-fade-in">
-    <h2 className="section-title"> > ls ./experience</h2>
+    <h2 className="section-title"> > cat experience.md</h2>
     {data.map((job, index) => (
       <div key={index} className="content-card">
         <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap' }}>
@@ -67,7 +67,7 @@ const ExperienceView = ({ data }) => (
 
 const ProjectsView = ({ data }) => (
   <div className="animate-fade-in">
-    <h2 className="section-title"> > git log --oneline</h2>
+    <h2 className="section-title"> > cat projects.js</h2>
     {data.map((project, index) => (
       <div key={index} className="content-card">
         <h2>{project.title}</h2>
@@ -216,6 +216,8 @@ function App() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isTerminalOpen, isClosing]);
 
+  const username = portfolioData.profile.name.split(' ')[0].toLowerCase();
+
   return (
     <>
       {/* Black background for off state */}
@@ -225,6 +227,8 @@ function App() {
       <div
         className={`crt-container ${bootState === 'off' ? 'crt-turn-off' : (bootState === 'turning-on' ? 'crt-turn-on' : '')}`}
       >
+        <div className="scanline"></div>
+        <div className="crt-flicker"></div>
 
         {/* Content Switching */}
         {bootState === 'booting' ? (
@@ -233,14 +237,11 @@ function App() {
           null
         ) : (
           <div className={`app-content ${bootState === 'on' ? 'fade-in' : ''}`}>
-            <div className="scanline"></div>
-            <div className="crt-flicker"></div>
-
             {/* Sidebar Navigation */}
             <nav className="sidebar">
               <div className="profile-section">
                 <Terminal size={40} color="#ffb000" />
-                <div style={{ marginTop: '10px', fontSize: '0.8rem' }}>{portfolioData.profile.name.split(' ')[0].toUpperCase()}_PORTFOLIO_V1</div>
+                <div style={{ marginTop: '10px', fontSize: '0.8rem' }}>{username.toUpperCase()}_PORTFOLIO_V1</div>
               </div>
 
               <div className="nav-menu">
@@ -281,7 +282,7 @@ function App() {
             {/* Main Content Area */}
             <main className="main-content">
               <div className="header-bar">
-                 root@nathaniel:~/portfolio/{activeTab} -- -bash
+                 root@{username}:~/portfolio/{activeTab} -- -bash
               </div>
               {renderContent()}
 
@@ -292,7 +293,7 @@ function App() {
                   onClick={() => setIsTerminalOpen(true)}
                 >
                   <Terminal size={20} />
-                  <span>_TERMINAL</span>
+                  <span>TERMINAL</span>
                 </button>
               )}
 

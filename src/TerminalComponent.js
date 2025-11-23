@@ -256,7 +256,7 @@ const TerminalComponent = ({ onNavigate, activeTab, onClose, isClosing, onAnimat
         break;
       case 'neofetch':
         response = `
-       _,met$$$$$gg.          root@nathaniel
+       _,met$$$$$gg.          root@${portfolioData.profile.name.split(' ')[0].toLowerCase()}
     ,g$$$$$$$$$$$$$$$P.       --------------
   ,g$$P"     """Y$$.".        OS: Debian GNU/Linux 12 (bookworm) x86_64
  ,$$P'              \`$$$.     Host: Hackermans Laptop
@@ -507,7 +507,7 @@ Location: ${portfolioData.profile.location}
           </div>
         ))}
         <div className="terminal-input-line">
-          <span className="terminal-prompt-line">root@nathaniel:~/portfolio/{activeTab} $ </span>
+          <span className="terminal-prompt-line">root@${portfolioData.profile.name.split(' ')[0].toLowerCase()}:~/portfolio/{activeTab} $ </span>
           <div className="input-container">
             <input
               ref={inputRef}
