@@ -211,10 +211,10 @@ Location: ${portfolioData.profile.location}
           '/projects.js',
           'README.md',
           '/README.md',
-          'hello.py',
-          '/hello.py',
-          'demo.js',
-          '/demo.js'
+          'vehicle_race.py',
+          '/vehicle_race.py',
+          'biologySim.js',
+          '/biologySim.js'
         ];
 
         if (protectedFiles.includes(filename)) {

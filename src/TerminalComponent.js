@@ -109,24 +109,22 @@ const TerminalComponent = ({ onNavigate, activeTab, onClose, isClosing, onAnimat
           } else {
             setSuggestion('');
           }
-        } else if (['cd', 'cat', 'rm', 'node', 'python', 'touch', 'echo'].includes(cmd)) {
+        } else if (cmd === 'cd') {
+          // cd uses the navigation sections, not VFS
+          const match = DIRS.find(o => o.startsWith(arg));
+          if (match && match !== arg) {
+            setSuggestion(match.slice(arg.length));
+          } else {
+            setSuggestion('');
+          }
+        } else if (['cat', 'rm', 'node', 'python', 'touch', 'echo'].includes(cmd)) {
           // Get files from VFS for autocomplete
           try {
             const files = await vfs.readdir('/');
-            let options;
-
-            if (cmd === 'cd') {
-              // Only directories for cd
-              options = files
-                .filter(f => f.type === 'directory')
-                .map(f => f.path.split('/').pop());
-            } else {
-              // All files for other commands
-              options = files.map(f => {
-                const name = f.path.split('/').pop();
-                return f.type === 'directory' ? name + '/' : name;
-              });
-            }
+            const options = files.map(f => {
+              const name = f.path.split('/').pop();
+              return f.type === 'directory' ? name + '/' : name;
+            });
 
             const match = options.find(o => o.startsWith(arg));
             if (match && match !== arg) {
@@ -135,9 +133,8 @@ const TerminalComponent = ({ onNavigate, activeTab, onClose, isClosing, onAnimat
               setSuggestion('');
             }
           } catch (error) {
-            // Fallback to old behavior if VFS not ready
-            const options = cmd === 'cd' ? DIRS : FILES;
-            const match = options.find(o => o.startsWith(arg));
+            // Fallback to FILES if VFS not ready
+            const match = FILES.find(o => o.startsWith(arg));
             if (match && match !== arg) {
               setSuggestion(match.slice(arg.length));
             } else {

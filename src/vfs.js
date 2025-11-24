@@ -400,62 +400,389 @@ Try running the sample programs!
 `
       },
       {
-        path: '/hello.py',
-        content: `# Sample Python Program
-# Try running this in the Python shell!
+        path: '/vehicle_race.py',
+        content: `# vehicle_race.py
 
-def greet(name):
-    """Return a friendly greeting."""
-    return f"Hello, {name}! Welcome to the VFS."
+import random
 
-def factorial(n):
-    """Calculate factorial recursively."""
-    if n <= 1:
-        return 1
-    return n * factorial(n - 1)
+def clamp01(x):
+    return max(0.0, min(1.0, x))
 
-# Try these commands:
-# greet("World")
-# factorial(5)
-# [factorial(i) for i in range(1, 6)]
+def rr(a, b):
+    return random.random() * (b - a) + a
 
-print("Python program loaded!")
-print("Try: greet('World') or factorial(5)")
+# -------------------------------
+# Vehicle & Track Models
+# -------------------------------
+
+class Vehicle:
+    def __init__(self, name, speed, accel, handling):
+        self.name = name
+        self.speed = speed
+        self.accel = accel
+        self.handling = handling
+        self.score = 0.0
+
+    @staticmethod
+    def random(name):
+        return Vehicle(
+            name=name,
+            speed=random.random(),
+            accel=random.random(),
+            handling=random.random()
+        )
+
+class Track:
+    def __init__(self, turns=0.5, straights=0.5, surface=0.5):
+        self.turns = turns
+        self.straights = straights
+        self.surface = surface
+
+    @staticmethod
+    def random():
+        return Track(
+            turns=random.random(),
+            straights=random.random(),
+            surface=random.random()
+        )
+
+# -------------------------------
+# Race Logic
+# -------------------------------
+
+def compute_performance(vehicle, track):
+    """
+    Fictional scoring formula.
+    """
+    v = vehicle
+    t = track
+
+    score = 0
+    score += v.speed * t.straights * 1.4
+    score += v.accel * (1 - t.surface) * 1.3
+    score += v.handling * t.turns * 1.5
+
+    # Bonus if well-rounded
+    avg = (v.speed + v.accel + v.handling) / 3
+    balance = 1 - (
+        abs(v.speed - avg) +
+        abs(v.accel - avg) +
+        abs(v.handling - avg)
+    ) / 3
+    score += balance * 0.4
+
+    return score
+
+def race(vehicles, track):
+    results = []
+    for v in vehicles:
+        v.score = compute_performance(v, track)
+        results.append((v.score, v))
+    return sorted(results, key=lambda x: -x[0])
+
+# -------------------------------
+# Main Simulation
+# -------------------------------
+
+def run_race_sim(rounds=3, vehicle_count=6):
+    vehicles = [Vehicle.random(f"Car {i + 1}") for i in range(vehicle_count)]
+
+    print("")
+    print("==================================================")
+    print("                VEHICLE RACE SIMULATION           ")
+    print("==================================================")
+
+    for i in range(1, rounds + 1):
+        track = Track.random()
+        results = race(vehicles, track)
+
+        print("")
+        print(f"--------------------------------------------------")
+        print(f" Race {i}")
+        print(f"--------------------------------------------------")
+        print(f"    Track Conditions")
+        print(f"      Turns      : {track.turns:.2f}")
+        print(f"      Straights  : {track.straights:.2f}")
+        print(f"      Surface    : {track.surface:.2f}")
+        print("")
+        print("    Results")
+        print("      Position   Vehicle     Score")
+
+        for pos, (score, v) in enumerate(results, start=1):
+            # Align columns
+            pos_str = str(pos).rjust(3)
+            name_str = v.name.ljust(10)
+            score_str = f"{score:.3f}".rjust(7)
+
+            print(f"      {pos_str}        {name_str}  {score_str}")
+
+    print("")
+    print("==================================================")
+    print(" Simulation complete")
+    print("==================================================")
+    print("")
+
+
+# Auto-run
+run_race_sim()
 `
       },
       {
-        path: '/demo.js',
-        content: `// Sample Node.js Program
-// Try pasting this into the Node shell!
+        path: '/biologySim.js',
+        content: `// biologySim.js
+// Fake biological generations with genetics + environment variables.
 
-// Simple class example
-class Calculator {
-  add(a, b) { return a + b; }
-  subtract(a, b) { return a - b; }
-  multiply(a, b) { return a * b; }
-  divide(a, b) { return b !== 0 ? a / b : 'Error: Division by zero'; }
-}
+// ----------------------
+// "Constructor" classes
+// ----------------------
 
-// Array utilities
-const sum = arr => arr.reduce((a, b) => a + b, 0);
-const average = arr => sum(arr) / arr.length;
+// Each organism has a small genome (traits 0–1) and a fitness score.
+class Organism {
+  constructor(id, genes, generation) {
+    this.id = id;                 // numeric id
+    this.genes = genes;           // { speed, size, camouflage }
+    this.generation = generation; // generation number
+    this.fitness = 0;             // computed later
+  }
 
-// Fibonacci generator
-function* fibonacci(n) {
-  let [a, b] = [0, 1];
-  for (let i = 0; i < n; i++) {
-    yield a;
-    [a, b] = [b, a + b];
+  // Make a random organism (used for the first generation).
+  static random(id, generation = 0) {
+    return new Organism(
+      id,
+      {
+        speed: Math.random(),
+        size: Math.random(),
+        camouflage: Math.random()
+      },
+      generation
+    );
   }
 }
 
-// Try these:
-// const calc = new Calculator()
-// calc.add(5, 3)
-// sum([1, 2, 3, 4, 5])
-// [...fibonacci(10)]
+// Environment variables that influence fitness.
+// Values go from 0–1 for simplicity.
+class Environment {
+  constructor(temperature = 0.5, food = 0.5, predators = 0.5) {
+    this.temperature = temperature;
+    this.food = food;
+    this.predators = predators;
+  }
 
-console.log('Demo loaded! Try: const calc = new Calculator(); calc.add(5, 3)');
+  // Slightly change the environment over time.
+  mutate(strength = 0.1) {
+    this.temperature = clamp01(this.temperature + randRange(-strength, strength));
+    this.food        = clamp01(this.food + randRange(-strength, strength));
+    this.predators   = clamp01(this.predators + randRange(-strength, strength));
+  }
+}
+
+// ----------------------
+// Utility functions
+// ----------------------
+
+function clamp01(x) {
+  return Math.max(0, Math.min(1, x));
+}
+
+function randRange(min, max) {
+  return Math.random() * (max - min) + min;
+}
+
+// Simple "roulette wheel" selection based on fitness.
+function selectByFitness(population) {
+  const totalFitness = population.reduce((sum, o) => sum + o.fitness, 0) || 1e-6;
+
+  let r = Math.random() * totalFitness;
+  for (const org of population) {
+    r -= org.fitness;
+    if (r <= 0) return org;
+  }
+  // Fallback
+  return population[population.length - 1];
+}
+
+// ----------------------
+// Genetics + fitness
+// ----------------------
+
+// How good an organism is in this environment.
+function computeFitness(organism, env) {
+  const g = organism.genes;
+
+  // Example "biology":
+  // - High speed + medium size helps when predators are high.
+  // - Bigger size is good when food is abundant.
+  // - More camouflage is valuable with predators.
+  // - Being too big is bad when food is low.
+
+  let fitness = 0;
+
+  // Speed & predators
+  fitness += g.speed * env.predators * 1.5;
+
+  // Size & food
+  fitness += g.size * env.food * 1.2;
+
+  // Camouflage & predators
+  fitness += g.camouflage * env.predators * 1.0;
+
+  // Penalty for being big when food is scarce
+  fitness -= g.size * (1 - env.food) * 0.8;
+
+  // Small bonus for balanced traits
+  const balance = 1 - (Math.abs(g.speed - g.size) +
+                       Math.abs(g.speed - g.camouflage) +
+                       Math.abs(g.size  - g.camouflage)) / 3;
+  fitness += balance * 0.5;
+
+  // Ensure non-negative
+  return Math.max(0.0001, fitness);
+}
+
+// Mix genes from two parents + mutation.
+function reproduce(parentA, parentB, id, generation, mutationRate = 0.05, mutationStrength = 0.15) {
+  const childGenes = {};
+
+  for (const key of Object.keys(parentA.genes)) {
+    // Basic "crossover": average of parents
+    let value = (parentA.genes[key] + parentB.genes[key]) / 2;
+
+    // Random mutation
+    if (Math.random() < mutationRate) {
+      value += randRange(-mutationStrength, mutationStrength);
+    }
+
+    childGenes[key] = clamp01(value);
+  }
+
+  return new Organism(id, childGenes, generation);
+}
+
+// ----------------------
+// Population management
+// ----------------------
+
+function createInitialPopulation(size) {
+  const population = [];
+  for (let i = 0; i < size; i++) {
+    population.push(Organism.random(i, 0));
+  }
+  return population;
+}
+
+function evaluatePopulation(population, env) {
+  for (const org of population) {
+    org.fitness = computeFitness(org, env);
+  }
+}
+
+function createNextGeneration(population, env, generation, size) {
+  // Evaluate fitness for selection
+  evaluatePopulation(population, env);
+
+  const next = [];
+  for (let i = 0; i < size; i++) {
+    const parentA = selectByFitness(population);
+    const parentB = selectByFitness(population);
+    const child = reproduce(parentA, parentB, i, generation);
+    next.push(child);
+  }
+  return next;
+}
+
+// ----------------------
+// Stats + "display"
+// ----------------------
+
+
+function logGenerationStats(population, env, generationIndex) {
+  const n = population.length;
+
+  let avgSpeed = 0, avgSize = 0, avgCamo = 0, avgFitness = 0;
+  for (const o of population) {
+    avgSpeed   += o.genes.speed;
+    avgSize    += o.genes.size;
+    avgCamo    += o.genes.camouflage;
+    avgFitness += o.fitness;
+  }
+
+  avgSpeed   /= n;
+  avgSize    /= n;
+  avgCamo    /= n;
+  avgFitness /= n;
+
+  console.log("");
+  console.log("==================================================");
+  console.log("                 GENERATION " + generationIndex);
+  console.log("==================================================");
+
+  console.log("    Environment");
+  console.log("      Temperature : " + env.temperature.toFixed(2));
+  console.log("      Food        : " + env.food.toFixed(2));
+  console.log("      Predators   : " + env.predators.toFixed(2));
+
+  console.log("");
+  console.log("    Average Traits");
+  console.log("      Speed       : " + avgSpeed.toFixed(3));
+  console.log("      Size        : " + avgSize.toFixed(3));
+  console.log("      Camouflage  : " + avgCamo.toFixed(3));
+
+  console.log("");
+  console.log("    Average Fitness");
+  console.log("      Fitness     : " + avgFitness.toFixed(3));
+  console.log("");
+}
+
+function echoOrganisms(population, max = 5) {
+  console.log("    Sample Organisms");
+  console.log("      Showing " + max + " of " + population.length);
+
+  population.slice(0, max).forEach((o, i) => {
+    console.log("");
+    console.log("      Organism #" + i + "  (Generation " + o.generation + ")");
+    console.log("        Speed      : " + o.genes.speed.toFixed(3));
+    console.log("        Size       : " + o.genes.size.toFixed(3));
+    console.log("        Camouflage : " + o.genes.camouflage.toFixed(3));
+    console.log("        Fitness    : " + o.fitness.toFixed(3));
+  });
+
+  console.log("");
+}
+
+// ----------------------
+// Main simulation driver
+// ----------------------
+
+function runSimulation({
+  populationSize = 50,
+  generations = 3,
+  envStart = new Environment(0.4, 0.7, 0.6),
+  envDriftStrength = 0.05
+} = {}) {
+  let env = envStart;
+  let population = createInitialPopulation(populationSize);
+
+  // Evaluate starting population
+  evaluatePopulation(population, env);
+  logGenerationStats(population, env, 0);
+  echoOrganisms(population);
+
+  for (let gen = 1; gen <= generations; gen++) {
+    // Environment drifts a bit each generation
+    env.mutate(envDriftStrength);
+
+    // Build the next generation
+    population = createNextGeneration(population, env, gen, populationSize);
+
+    // Evaluate + log
+    evaluatePopulation(population, env);
+    logGenerationStats(population, env, gen);
+    echoOrganisms(population);
+  }
+}
+
+// Actually run it when file is executed directly.
+runSimulation();
 `
       }
     ];
