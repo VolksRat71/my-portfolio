@@ -90,32 +90,40 @@ class VFSFile:
 # Synchronous helper functions for VFS file operations
 def read_file(path):
     """Synchronously read a file from VFS. Returns file contents as string."""
-    # Create a container to store result
-    result = {'value': None, 'error': None, 'done': False}
+    # Use __pragma__ to inject raw JavaScript for synchronous execution
+    # This is a hack but necessary since Brython can't truly block on promises
+    import sys
+    from browser import window
 
-    def on_success(content):
-        result['value'] = content
-        result['done'] = True
+    # We need to use a synchronous approach
+    # Since we can't truly make async sync in browser, we'll use a different strategy
+    # Store result in a mutable container
+    result = [None, None]  # [value, error]
 
-    def on_error(error):
-        result['error'] = str(error)
-        result['done'] = True
+    def success_handler(content):
+        result[0] = content
 
-    # Call VFS readFile (returns a Promise)
+    def error_handler(err):
+        result[1] = str(err) if hasattr(err, 'message') else str(err)
+
+    # Execute the promise
     promise = window.vfs.readFile(path)
-    promise.then(on_success).catch(on_error)
+    promise.then(success_handler, error_handler)
 
-    # Wait for promise to resolve (hacky busy-wait)
-    timeout = 0
-    while not result['done'] and timeout < 1000:
-        timeout += 1
+    # Give microtask queue a chance to run
+    # In Brython, we need to yield control briefly
+    import time
+    for i in range(100):  # Try 100 times with small delay
+        if result[0] is not None or result[1] is not None:
+            break
+        time.sleep(0.001)  # 1ms delay
 
-    if result['error']:
-        raise FileNotFoundError(f"Error reading file: {result['error']}")
-    if not result['done']:
+    if result[1]:
+        raise FileNotFoundError(f"Error reading file: {result[1]}")
+    if result[0] is None:
         raise TimeoutError(f"Timeout reading file: {path}")
 
-    return result['value']
+    return result[0]
 
 def write_file(path, content):
     """Synchronously write content to a file in VFS."""

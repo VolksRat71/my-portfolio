@@ -112,6 +112,21 @@ class VirtualFileSystem {
     await this.ensureReady();
     path = this.normalizePath(path);
 
+    // Protected files that cannot be deleted
+    const protectedFiles = [
+      '/profile.json',
+      '/contact.txt',
+      '/experience.md',
+      '/projects.js',
+      '/README.md',
+      '/hello.py',
+      '/demo.js'
+    ];
+
+    if (protectedFiles.includes(path)) {
+      throw new Error(`rm: cannot remove '${path}': File is protected`);
+    }
+
     // Check if exists first
     const exists = await this.exists(path);
     if (!exists) {
@@ -371,6 +386,8 @@ Welcome! This is an interactive terminal interface.
 - contact.txt - Contact details
 - experience.md - Work experience
 - projects.js - Project portfolio
+- hello.py - Sample Python program
+- demo.js - Sample Node.js program
 
 ## Shell Commands
 Try: ls, cat <file>, echo, touch, rm, mkdir
@@ -379,7 +396,66 @@ Try: ls, cat <file>, echo, touch, rm, mkdir
 - \`python\` - Start Python REPL
 - \`node\` - Start Node.js REPL
 
-Both shells can read/write files!
+Try running the sample programs!
+`
+      },
+      {
+        path: '/hello.py',
+        content: `# Sample Python Program
+# Try running this in the Python shell!
+
+def greet(name):
+    """Return a friendly greeting."""
+    return f"Hello, {name}! Welcome to the VFS."
+
+def factorial(n):
+    """Calculate factorial recursively."""
+    if n <= 1:
+        return 1
+    return n * factorial(n - 1)
+
+# Try these commands:
+# greet("World")
+# factorial(5)
+# [factorial(i) for i in range(1, 6)]
+
+print("Python program loaded!")
+print("Try: greet('World') or factorial(5)")
+`
+      },
+      {
+        path: '/demo.js',
+        content: `// Sample Node.js Program
+// Try pasting this into the Node shell!
+
+// Simple class example
+class Calculator {
+  add(a, b) { return a + b; }
+  subtract(a, b) { return a - b; }
+  multiply(a, b) { return a * b; }
+  divide(a, b) { return b !== 0 ? a / b : 'Error: Division by zero'; }
+}
+
+// Array utilities
+const sum = arr => arr.reduce((a, b) => a + b, 0);
+const average = arr => sum(arr) / arr.length;
+
+// Fibonacci generator
+function* fibonacci(n) {
+  let [a, b] = [0, 1];
+  for (let i = 0; i < n; i++) {
+    yield a;
+    [a, b] = [b, a + b];
+  }
+}
+
+// Try these:
+// const calc = new Calculator()
+// calc.add(5, 3)
+// sum([1, 2, 3, 4, 5])
+// [...fibonacci(10)]
+
+console.log('Demo loaded! Try: const calc = new Calculator(); calc.add(5, 3)');
 `
       }
     ];
