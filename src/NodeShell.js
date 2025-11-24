@@ -129,7 +129,33 @@ const NodeShell = ({ onExit, setHistory, setIsAnimating, terminalEndRef }) => {
   const [commandHistory, setCommandHistory] = useState([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
 
+  const handlePaste = (e) => {
+    const pastedText = e.clipboardData.getData('text');
+    if (pastedText.includes('\n')) {
+      e.preventDefault();
+      // Execute multiline paste directly like a real terminal
+      const result = evaluateJS(pastedText);
+
+      if (result !== null) {
+        setShellHistory(prev => [...prev, { input: pastedText, output: result, multiline: true }]);
+        setCommandHistory(prev => [...prev, pastedText]);
+        setHistoryIndex(-1);
+      }
+
+      setInput('');
+    }
+  };
+
   const handleKeyDown = (e) => {
+    // Cmd+Enter or Ctrl+Enter: add line to multiline buffer (Node REPL style)
+    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+      e.preventDefault();
+      setMultilineBuffer(prev => [...prev, input]);
+      setIsMultilineMode(true);
+      setInput('');
+      return;
+    }
+
     if (e.key === 'ArrowUp') {
       e.preventDefault();
       if (commandHistory.length > 0) {
@@ -154,6 +180,33 @@ const NodeShell = ({ onExit, setHistory, setIsAnimating, terminalEndRef }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+
+    // If in multiline mode, combine buffer with current input
+    if (isMultilineMode || multilineBuffer.length > 0) {
+      // Empty line or just whitespace submits multiline code
+      if (!input.trim()) {
+        const codeToExecute = multilineBuffer.join('\n');
+        const result = evaluateJS(codeToExecute);
+
+        if (result !== null) {
+          setShellHistory(prev => [...prev, { input: codeToExecute, output: result, multiline: true }]);
+          setCommandHistory(prev => [...prev, codeToExecute]);
+          setHistoryIndex(-1);
+        }
+
+        setMultilineBuffer([]);
+        setIsMultilineMode(false);
+        setInput('');
+        return;
+      } else {
+        // Add current line to buffer and continue
+        setMultilineBuffer(prev => [...prev, input]);
+        setInput('');
+        return;
+      }
+    }
+
+    // Single line execution
     if (!input.trim()) return;
 
     const result = evaluateJS(input);
@@ -173,23 +226,34 @@ const NodeShell = ({ onExit, setHistory, setIsAnimating, terminalEndRef }) => {
         <React.Fragment key={i}>
           <div className="terminal-line">
             <span style={{ color: '#4CAF50' }}>&gt; </span>
-            {item.input}
+            <span style={{ whiteSpace: 'pre-wrap' }}>{item.input}</span>
           </div>
           {item.output && (
-            <div className="terminal-line output" style={{ color: '#aaa' }}>
+            <div className="terminal-line output" style={{ color: '#aaa', whiteSpace: 'pre-wrap' }}>
               {item.output}
             </div>
           )}
         </React.Fragment>
       ))}
+      {multilineBuffer.map((line, i) => (
+        <div key={`ml-${i}`} className="terminal-line">
+          <span style={{ color: '#4CAF50', marginRight: '0.5rem' }}>
+            {'>'}
+          </span>
+          <span>{line}</span>
+        </div>
+      ))}
       <form onSubmit={handleSubmit} style={{ display: 'flex', alignItems: 'center' }}>
-        <span style={{ color: '#4CAF50', marginRight: '0.5rem' }}>&gt; </span>
+        <span style={{ color: '#4CAF50', marginRight: '0.5rem' }}>
+          {isMultilineMode || multilineBuffer.length > 0 ? '... ' : '> '}
+        </span>
         <input
           ref={inputRef}
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
+          onPaste={handlePaste}
           className="terminal-input"
           autoFocus
           spellCheck="false"
