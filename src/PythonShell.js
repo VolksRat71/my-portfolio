@@ -45,7 +45,7 @@ const PythonShell = ({ onExit, setIsAnimating, terminalEndRef }) => {
       inputRef.current?.focus();
     }
     terminalEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [shellHistory, brythonReady, terminalEndRef]);
+  }, [shellHistory, brythonReady, terminalEndRef, multilineBuffer]);
 
   const evaluatePython = (code) => {
     // Handle special commands

@@ -157,18 +157,6 @@ Hint: Try 'help -a' to see hidden commands!`;
       }
     },
 
-    mkdir: async (args) => {
-      if (args.length === 0) {
-        return 'Usage: mkdir <directory>';
-      }
-      try {
-        await vfs.mkdir(args[0]);
-        return '';
-      } catch (error) {
-        return error.message;
-      }
-    },
-
     neofetch: () => {
       const info = getSystemInfo();
       return `
@@ -296,7 +284,7 @@ Date:   ${new Date().toDateString()}
     npm: (args) => {
       if (args.length === 0 || args[0] === '--version' || args[0] === '-v') {
         return '10.2.4';
-      } else if (args[0] === 'install') {
+      } else if (args[0] === 'install' || args[0] === 'i') {
         return `added 1337 packages in 42s
 
 128 packages are looking for funding

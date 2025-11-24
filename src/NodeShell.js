@@ -18,7 +18,7 @@ const NodeShell = ({ onExit, setHistory, setIsAnimating, terminalEndRef }) => {
     inputRef.current?.focus();
     // Scroll to bottom
     terminalEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [shellHistory, terminalEndRef]);
+  }, [shellHistory, terminalEndRef, multilineBuffer]);
 
   const evaluateJS = (code) => {
     try {
