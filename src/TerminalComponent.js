@@ -7,6 +7,7 @@ import { createCommandHandlers } from './terminalCommands';
 import { createAsyncCommandHandlers } from './terminalAsyncCommands';
 import NodeShell from './NodeShell';
 import PythonShell from './PythonShell';
+import vfs from './vfs';
 
 const TerminalComponent = ({ onNavigate, activeTab, onClose, isClosing, onAnimationEnd, onReboot }) => {
   const [input, setInput] = useState('');
@@ -46,6 +47,13 @@ const TerminalComponent = ({ onNavigate, activeTab, onClose, isClosing, onAnimat
   useEffect(() => {
     scrollToBottom();
   }, [history]);
+
+  // Initialize VFS on component mount
+  useEffect(() => {
+    vfs.initializeDefaults(portfolioData).catch(err => {
+      console.error('Failed to initialize VFS:', err);
+    });
+  }, []);
 
   // Track visual viewport height for mobile
   useEffect(() => {
@@ -123,7 +131,7 @@ const TerminalComponent = ({ onNavigate, activeTab, onClose, isClosing, onAnimat
     }
   }, [input, commandHistory]);
 
-  const handleCommand = (cmd) => {
+  const handleCommand = async (cmd) => {
     const parts = cmd.trim().split(' ');
     const command = parts[0].toLowerCase();
     const args = parts.slice(1);
@@ -210,9 +218,9 @@ const TerminalComponent = ({ onNavigate, activeTab, onClose, isClosing, onAnimat
       setHistoryIndex(-1);
       return;
     }
-    // Handle synchronous commands
+    // Handle synchronous and async commands
     else if (handlers[command]) {
-      response = handlers[command](args);
+      response = await handlers[command](args);
       // If handler returned null, check async handlers
       if (response === null && command === 'python') {
         asyncHandlers.python(cmd);

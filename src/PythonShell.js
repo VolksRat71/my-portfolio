@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { loadBrython } from './brythonLoader';
+import vfs from './vfs';
 
 const PythonShell = ({ onExit, setIsAnimating, terminalEndRef }) => {
   const [input, setInput] = useState('');

@@ -1,5 +1,5 @@
-import { FILES } from './terminalConstants';
 import { getSystemInfo } from './terminalHelpers';
+import vfs from './vfs';
 
 // Command handlers - each returns a response string or handles async operations
 export const createCommandHandlers = (portfolioData, setHistory, setIsAnimating, setCommandHistory, setHistoryIndex) => {
@@ -12,11 +12,14 @@ export const createCommandHandlers = (portfolioData, setHistory, setIsAnimating,
   help -a       - Show all commands (including easter eggs)
   ls            - List available files
   cat <file>    - Display file contents
+  echo <text>   - Print text (use > to write to file)
+  touch <file>  - Create empty file
+  rm <file>     - Delete file
+  mkdir <dir>   - Create directory
   cd <section>  - Navigate to a page section
   contact       - View contact information
   open <target> - Open links (linkedin, github, email)
   whoami        - Display current user information
-  echo <text>   - Print text to the terminal
   neofetch      - Display system information
   reboot        - Reboot the system
   exit          - Close the terminal
@@ -68,7 +71,20 @@ Hint: Try 'help -a' to see hidden commands!`;
       }
     },
 
-    ls: () => FILES.join('\n'),
+    ls: async () => {
+      try {
+        const files = await vfs.readdir('/');
+        if (files.length === 0) {
+          return 'No files found';
+        }
+        return files.map(f => {
+          const name = f.path.split('/').pop();
+          return f.type === 'directory' ? name + '/' : name;
+        }).join('\n');
+      } catch (error) {
+        return error.message;
+      }
+    },
 
     contact: () => `
 ┌────────────────────────────────────────┐
@@ -105,36 +121,51 @@ Hint: Try 'help -a' to see hidden commands!`;
       }
     },
 
-    cat: (args) => {
+    cat: async (args) => {
       if (args.length === 0) {
         return 'Usage: cat <file>';
       }
-      const target = args[0].replace('.json', '').replace('.md', '').replace('.js', '').replace('.txt', '');
-      if (target === 'profile') {
-        return `{
-  "name": "${portfolioData.profile.name}",
-  "role": "${portfolioData.profile.role}",
-  "tagline": "${portfolioData.profile.tagline}",
-  "location": "${portfolioData.profile.location}",
-  "bio": "${portfolioData.profile.bio}",
-  "social": {
-    "linkedin": "${portfolioData.profile.social.linkedin}",
-    "github": "${portfolioData.profile.social.github}",
-    "email": "${portfolioData.profile.social.email}"
-  }
-}`;
-      } else if (target === 'experience') {
-        return portfolioData.experience.map((exp, i) =>
-          `## ${exp.company}\n**${exp.role}** (${exp.period})\n${exp.location ? `**Location:** ${exp.location}\n` : ''}${exp.details.map(d => `• ${d}`).join('\n')}`
-        ).join('\n\n');
-      } else if (target === 'projects') {
-        return portfolioData.projects.map((proj, i) =>
-          `const project${i + 1} = {\n  title: "${proj.title}",\n  tech: [${proj.tech.map(t => `"${t}"`).join(', ')}],\n  description: "${proj.description}"\n};`
-        ).join('\n\n');
-      } else if (target === 'contact') {
-        return handlers.contact();
-      } else {
-        return `cat: ${args[0]}: No such file`;
+      try {
+        const content = await vfs.readFile(args[0]);
+        return content;
+      } catch (error) {
+        return error.message;
+      }
+    },
+
+    touch: async (args) => {
+      if (args.length === 0) {
+        return 'Usage: touch <file>';
+      }
+      try {
+        await vfs.touch(args[0]);
+        return '';
+      } catch (error) {
+        return error.message;
+      }
+    },
+
+    rm: async (args) => {
+      if (args.length === 0) {
+        return 'Usage: rm <file>';
+      }
+      try {
+        await vfs.deleteFile(args[0]);
+        return '';
+      } catch (error) {
+        return error.message;
+      }
+    },
+
+    mkdir: async (args) => {
+      if (args.length === 0) {
+        return 'Usage: mkdir <directory>';
+      }
+      try {
+        await vfs.mkdir(args[0]);
+        return '';
+      } catch (error) {
+        return error.message;
       }
     },
 
@@ -167,8 +198,35 @@ Location: ${portfolioData.profile.location}
 
 "${portfolioData.profile.tagline}"`,
 
-    echo: (args) => {
+    echo: async (args) => {
       if (args.length === 0) return '';
+
+      // Check if there's a redirect operator
+      const redirectIndex = args.indexOf('>');
+      if (redirectIndex !== -1) {
+        // echo text > file
+        const text = args.slice(0, redirectIndex).join(' ');
+        const filename = args[redirectIndex + 1];
+
+        if (!filename) {
+          return 'Usage: echo <text> > <file>';
+        }
+
+        let content = text;
+        if ((content.startsWith('"') && content.endsWith('"')) ||
+            (content.startsWith("'") && content.endsWith("'"))) {
+          content = content.slice(1, -1);
+        }
+
+        try {
+          await vfs.writeFile(filename, content);
+          return '';
+        } catch (error) {
+          return error.message;
+        }
+      }
+
+      // Regular echo
       let text = args.join(' ');
       if ((text.startsWith('"') && text.endsWith('"')) ||
           (text.startsWith("'") && text.endsWith("'"))) {
