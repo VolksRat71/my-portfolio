@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import vfs from './vfs';
 
 const NodeShell = ({ onExit, setHistory, setIsAnimating, terminalEndRef }) => {
   const [input, setInput] = useState('');
@@ -28,7 +29,12 @@ const NodeShell = ({ onExit, setHistory, setIsAnimating, terminalEndRef }) => {
       }
       if (code.trim() === '.help') {
         return `.exit    Exit the REPL
-.help    Print this help message`;
+.help    Print this help message
+
+File I/O available:
+  fs.readFileSync(path)     - Read file contents
+  fs.writeFileSync(path, data) - Write file contents
+  fs.readdirSync()          - List files`;
       }
 
       // Reset console output
@@ -44,6 +50,93 @@ const NodeShell = ({ onExit, setHistory, setIsAnimating, terminalEndRef }) => {
         }
       };
 
+      // Create mock fs module with VFS integration
+      // Note: These are synchronous wrappers around async VFS operations
+      // They will block execution briefly
+      const fsObj = {
+        readFileSync: (path) => {
+          let result = null;
+          let error = null;
+          let done = false;
+
+          vfs.readFile(path).then(
+            content => { result = content; done = true; },
+            err => { error = err; done = true; }
+          );
+
+          // Busy wait for async operation (not ideal but works for demo)
+          let timeout = 0;
+          while (!done && timeout < 10000) {
+            timeout++;
+          }
+
+          if (error) throw new Error(error.message);
+          if (!done) throw new Error('Timeout reading file');
+          return result;
+        },
+
+        writeFileSync: (path, data) => {
+          let error = null;
+          let done = false;
+
+          vfs.writeFile(path, String(data)).then(
+            () => { done = true; },
+            err => { error = err; done = true; }
+          );
+
+          let timeout = 0;
+          while (!done && timeout < 10000) {
+            timeout++;
+          }
+
+          if (error) throw new Error(error.message);
+          if (!done) throw new Error('Timeout writing file');
+        },
+
+        readdirSync: (path = '/') => {
+          let result = null;
+          let error = null;
+          let done = false;
+
+          vfs.readdir(path).then(
+            files => {
+              result = files.map(f => {
+                const name = f.path.split('/').pop();
+                return f.type === 'directory' ? name + '/' : name;
+              });
+              done = true;
+            },
+            err => { error = err; done = true; }
+          );
+
+          let timeout = 0;
+          while (!done && timeout < 10000) {
+            timeout++;
+          }
+
+          if (error) throw new Error(error.message);
+          if (!done) throw new Error('Timeout listing directory');
+          return result;
+        },
+
+        existsSync: (path) => {
+          let result = false;
+          let done = false;
+
+          vfs.exists(path).then(
+            exists => { result = exists; done = true; },
+            () => { result = false; done = true; }
+          );
+
+          let timeout = 0;
+          while (!done && timeout < 10000) {
+            timeout++;
+          }
+
+          return result;
+        }
+      };
+
       // Get all variable names from context
       const varNames = Object.keys(contextRef.current.vars);
       const varValues = varNames.map(name => contextRef.current.vars[name]);
@@ -53,14 +146,14 @@ const NodeShell = ({ onExit, setHistory, setIsAnimating, terminalEndRef }) => {
 
       // Try as expression first
       try {
-        const func = new Function('console', ...varNames, `return (${code})`);
-        result = func(consoleObj, ...varValues);
+        const func = new Function('console', 'fs', ...varNames, `return (${code})`);
+        result = func(consoleObj, fsObj, ...varValues);
       } catch (exprError) {
         // If expression fails, try as statement
         isExpression = false;
         try {
-          const func = new Function('console', ...varNames, code);
-          result = func(consoleObj, ...varValues);
+          const func = new Function('console', 'fs', ...varNames, code);
+          result = func(consoleObj, fsObj, ...varValues);
         } catch (stmtError) {
           throw exprError; // Throw the original expression error
         }
@@ -71,8 +164,8 @@ const NodeShell = ({ onExit, setHistory, setIsAnimating, terminalEndRef }) => {
       const varMatches = Array.from(code.matchAll(/(?:const|let|var)\s+(\w+)\s*=/g));
       if (varMatches.length > 0) {
         // Re-create function with all current vars plus execute the code
-        const allVarNames = [...varNames];
-        const allVarValues = [...varValues];
+        const allVarNames = ['console', 'fs', ...varNames];
+        const allVarValues = [consoleObj, fsObj, ...varValues];
 
         for (const match of varMatches) {
           const varName = match[1];

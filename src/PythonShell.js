@@ -13,6 +13,9 @@ const PythonShell = ({ onExit, setIsAnimating, terminalEndRef }) => {
   const contextRef = useRef({});
 
   useEffect(() => {
+    // Expose VFS to window for Python access
+    window.vfs = vfs;
+
     loadBrython()
       .then(() => {
         // Wait for the Python runner to be available
