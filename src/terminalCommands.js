@@ -15,7 +15,6 @@ export const createCommandHandlers = (portfolioData, setHistory, setIsAnimating,
   echo <text>   - Print text (use > to write to file)
   touch <file>  - Create empty file
   rm <file>     - Delete file
-  mkdir <dir>   - Create directory
   cd <section>  - Navigate to a page section
   contact       - View contact information
   open <target> - Open links (linkedin, github, email)
