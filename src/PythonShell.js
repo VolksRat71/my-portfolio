@@ -92,6 +92,20 @@ const PythonShell = ({ onExit, setIsAnimating, terminalEndRef }) => {
   };
 
   const handleKeyDown = (e) => {
+    // Tab: insert 4 spaces for indentation
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      const cursorPos = e.target.selectionStart;
+      const textBefore = input.substring(0, cursorPos);
+      const textAfter = input.substring(cursorPos);
+      setInput(textBefore + '    ' + textAfter);
+      // Set cursor position after the inserted spaces
+      setTimeout(() => {
+        e.target.selectionStart = e.target.selectionEnd = cursorPos + 4;
+      }, 0);
+      return;
+    }
+
     // Shift+Enter: add line to multiline buffer
     if (e.key === 'Enter' && e.shiftKey) {
       e.preventDefault();

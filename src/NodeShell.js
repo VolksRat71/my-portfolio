@@ -3,6 +3,8 @@ import React, { useState, useEffect, useRef } from 'react';
 const NodeShell = ({ onExit, setHistory, setIsAnimating, terminalEndRef }) => {
   const [input, setInput] = useState('');
   const [shellHistory, setShellHistory] = useState([]);
+  const [multilineBuffer, setMultilineBuffer] = useState([]);
+  const [isMultilineMode, setIsMultilineMode] = useState(false);
   const contextRef = useRef({
     // Create a persistent context that survives across evaluations
     vars: {},
