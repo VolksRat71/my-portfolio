@@ -308,17 +308,67 @@ Date:   ${new Date().toDateString()}
       }
     },
 
-    node: (args) => {
+    node: async (args) => {
       if (args[0] === '-v' || args[0] === '--version') {
         return 'v20.11.0';
+      }
+      // If a file argument is provided, execute it
+      if (args.length > 0) {
+        const filename = args[0];
+        try {
+          const code = await vfs.readFile(filename);
+
+          // Create a mock console that captures output
+          let output = [];
+          const mockConsole = {
+            log: (...args) => {
+              output.push(args.map(a =>
+                typeof a === 'object' ? JSON.stringify(a, null, 2) : String(a)
+              ).join(' '));
+            }
+          };
+
+          // Execute the code
+          try {
+            const func = new Function('console', code);
+            func(mockConsole);
+            return output.length > 0 ? output.join('\n') : '';
+          } catch (error) {
+            return `Error executing ${filename}:\n${error.message}`;
+          }
+        } catch (error) {
+          return error.message;
+        }
       }
       // Shell version handled in async commands
       return null;
     },
 
-    python: (args) => {
+    python: async (args) => {
       if (args[0] === '--version' || args[0] === '-V') {
         return 'Python 3.11.7';
+      }
+      // If a file argument is provided, execute it
+      if (args.length > 0) {
+        const filename = args[0];
+        try {
+          const code = await vfs.readFile(filename);
+
+          // Check if Brython is available
+          if (!window.run_python_code) {
+            return 'Python engine not loaded. Please wait a moment and try again.';
+          }
+
+          // Execute the Python code
+          try {
+            const result = window.run_python_code(code);
+            return result || '';
+          } catch (error) {
+            return `Error executing ${filename}:\n${error.message}`;
+          }
+        } catch (error) {
+          return error.message;
+        }
       }
       // Shell version handled in async commands
       return null;

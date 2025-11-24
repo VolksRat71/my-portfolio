@@ -86,49 +86,80 @@ const TerminalComponent = ({ onNavigate, activeTab, onClose, isClosing, onAnimat
 
   // Autocomplete suggestions
   useEffect(() => {
-    if (input) {
-      const historyMatch = [...commandHistory].reverse().find(h => h.startsWith(input) && h !== input);
+    const updateSuggestions = async () => {
+      if (input) {
+        const historyMatch = [...commandHistory].reverse().find(h => h.startsWith(input) && h !== input);
 
-      if (historyMatch) {
-        setSuggestion(historyMatch.slice(input.length));
-        return;
-      }
-
-      const parts = input.split(' ');
-      const cmd = parts[0];
-      const arg = parts.slice(1).join(' ');
-
-      if (parts.length === 1) {
-        const standardMatch = STANDARD_COMMANDS.find(c => c.startsWith(cmd));
-        const easterEggMatch = EASTER_EGG_COMMANDS.find(c => c.startsWith(cmd));
-        const match = standardMatch || easterEggMatch;
-
-        if (match && match !== cmd) {
-          setSuggestion(match.slice(cmd.length));
-        } else {
-          setSuggestion('');
+        if (historyMatch) {
+          setSuggestion(historyMatch.slice(input.length));
+          return;
         }
-      } else if (['cd', 'cat'].includes(cmd)) {
-        const options = cmd === 'cd' ? DIRS : FILES;
-        const match = options.find(o => o.startsWith(arg));
-        if (match && match !== arg) {
-          setSuggestion(match.slice(arg.length));
-        } else {
-          setSuggestion('');
-        }
-      } else if (cmd === 'open') {
-        const match = OPEN_TARGETS.find(o => o.startsWith(arg));
-        if (match && match !== arg) {
-          setSuggestion(match.slice(arg.length));
+
+        const parts = input.split(' ');
+        const cmd = parts[0];
+        const arg = parts.slice(1).join(' ');
+
+        if (parts.length === 1) {
+          const standardMatch = STANDARD_COMMANDS.find(c => c.startsWith(cmd));
+          const easterEggMatch = EASTER_EGG_COMMANDS.find(c => c.startsWith(cmd));
+          const match = standardMatch || easterEggMatch;
+
+          if (match && match !== cmd) {
+            setSuggestion(match.slice(cmd.length));
+          } else {
+            setSuggestion('');
+          }
+        } else if (['cd', 'cat', 'rm', 'node', 'python', 'touch', 'echo'].includes(cmd)) {
+          // Get files from VFS for autocomplete
+          try {
+            const files = await vfs.readdir('/');
+            let options;
+
+            if (cmd === 'cd') {
+              // Only directories for cd
+              options = files
+                .filter(f => f.type === 'directory')
+                .map(f => f.path.split('/').pop());
+            } else {
+              // All files for other commands
+              options = files.map(f => {
+                const name = f.path.split('/').pop();
+                return f.type === 'directory' ? name + '/' : name;
+              });
+            }
+
+            const match = options.find(o => o.startsWith(arg));
+            if (match && match !== arg) {
+              setSuggestion(match.slice(arg.length));
+            } else {
+              setSuggestion('');
+            }
+          } catch (error) {
+            // Fallback to old behavior if VFS not ready
+            const options = cmd === 'cd' ? DIRS : FILES;
+            const match = options.find(o => o.startsWith(arg));
+            if (match && match !== arg) {
+              setSuggestion(match.slice(arg.length));
+            } else {
+              setSuggestion('');
+            }
+          }
+        } else if (cmd === 'open') {
+          const match = OPEN_TARGETS.find(o => o.startsWith(arg));
+          if (match && match !== arg) {
+            setSuggestion(match.slice(arg.length));
+          } else {
+            setSuggestion('');
+          }
         } else {
           setSuggestion('');
         }
       } else {
         setSuggestion('');
       }
-    } else {
-      setSuggestion('');
-    }
+    };
+
+    updateSuggestions();
   }, [input, commandHistory]);
 
   const handleCommand = async (cmd) => {
