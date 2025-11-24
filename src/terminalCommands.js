@@ -199,6 +199,28 @@ Location: ${portfolioData.profile.location}
           return 'Usage: echo <text> > <file>';
         }
 
+        // Protected files that cannot be overwritten
+        const protectedFiles = [
+          'profile.json',
+          '/profile.json',
+          'contact.txt',
+          '/contact.txt',
+          'experience.md',
+          '/experience.md',
+          'projects.js',
+          '/projects.js',
+          'README.md',
+          '/README.md',
+          'hello.py',
+          '/hello.py',
+          'demo.js',
+          '/demo.js'
+        ];
+
+        if (protectedFiles.includes(filename)) {
+          return `echo: cannot overwrite '${filename}': File is protected`;
+        }
+
         let content = text;
         if ((content.startsWith('"') && content.endsWith('"')) ||
             (content.startsWith("'") && content.endsWith("'"))) {

@@ -726,7 +726,7 @@ li { margin-bottom: 0.5rem; }
 }
 
 .terminal-body::-webkit-scrollbar-thumb {
-  background: var(--accent-color);
+  background: var(--accent);
   border: 2px solid rgba(0, 0, 0, 0.3);
   border-radius: 6px;
 }
@@ -738,7 +738,33 @@ li { margin-bottom: 0.5rem; }
 /* Firefox scrollbar */
 .terminal-body {
   scrollbar-width: thin;
-  scrollbar-color: var(--accent-color) rgba(0, 0, 0, 0.3);
+  scrollbar-color: var(--accent) rgba(0, 0, 0, 0.3);
+}
+
+/* Custom scrollbar for main content */
+.main-content::-webkit-scrollbar {
+  width: 12px;
+}
+
+.main-content::-webkit-scrollbar-track {
+  background: var(--bg-color);
+  border-left: 1px solid var(--border-color);
+}
+
+.main-content::-webkit-scrollbar-thumb {
+  background: var(--accent);
+  border: 2px solid var(--bg-color);
+  border-radius: 6px;
+}
+
+.main-content::-webkit-scrollbar-thumb:hover {
+  background: var(--text-primary);
+}
+
+/* Firefox scrollbar for main content */
+.main-content {
+  scrollbar-width: thin;
+  scrollbar-color: var(--accent) var(--bg-color);
 }
 
 .terminal-line {
